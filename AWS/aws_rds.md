@@ -29,14 +29,14 @@ AWS RDS as a managed database service that simplifies database setup, operation,
 - **RDS for IBM Db2**: IBM's enterprise database system
 
 ### Engine Selection Criteria
-| Engine | Best For | Key Features |
-|--------|----------|-------------|
-| **MySQL** | Web applications, e-commerce | Open source, wide compatibility |
-| **PostgreSQL** | Complex queries, data analytics | Advanced SQL features, JSON support |
-| **Oracle** | Enterprise applications | Advanced features, high performance |
-| **SQL Server** | Microsoft ecosystem | .NET integration, reporting services |
-| **MariaDB** | MySQL replacement | Enhanced performance, additional storage engines |
-| **Aurora** | Cloud-native applications | AWS-optimized, auto-scaling storage |
+| Engine         | Best For                        | Key Features                                     |
+|----------------|---------------------------------|--------------------------------------------------|
+| **MySQL**      | Web applications, e-commerce    | Open source, wide compatibility                  |
+| **PostgreSQL** | Complex queries, data analytics | Advanced SQL features, JSON support              |
+| **Oracle**     | Enterprise applications         | Advanced features, high performance              |
+| **SQL Server** | Microsoft ecosystem             | .NET integration, reporting services             |
+| **MariaDB**    | MySQL replacement               | Enhanced performance, additional storage engines |
+| **Aurora**     | Cloud-native applications       | AWS-optimized, auto-scaling storage              |
 
 ## Aurora Features and Benefits
 
@@ -139,7 +139,8 @@ Secondary Region (us-west-2)
 
 #### Multi-AZ DB Instance (Traditional)
 * **Primary DB Instance**: One primary DB instance in one availability zone handles read and write operations
-* **Standby Instance**: Synchronous replication with the primary DB instance in another availability zone, used for read and write operations only when the primary DB instance is down
+* **Standby Instance**: Synchronous replication with the primary DB instance in another availability zone, used for read 
+  and write operations only when the primary DB instance is down
 * **Purpose**: High availability and automatic failover
 
 ```
@@ -170,13 +171,13 @@ Multi-AZ Cluster Architecture
 
 #### Multi-AZ Comparison
 
-| Feature | Multi-AZ DB Instance | Multi-AZ DB Cluster |
-|---------|---------------------|---------------------|
-| **Read Scaling** | No (standby not accessible) | Yes (multiple readers) |
-| **Failover Time** | 1-2 minutes | Under 1 minute |
-| **Reader Endpoints** | None | Multiple read endpoints |
-| **Cost** | Lower | Higher |
-| **Use Case** | High availability only | HA + read scaling |
+| Feature              | Multi-AZ DB Instance        | Multi-AZ DB Cluster     |
+|----------------------|-----------------------------|-------------------------|
+| **Read Scaling**     | No (standby not accessible) | Yes (multiple readers)  |
+| **Failover Time**    | 1-2 minutes                 | Under 1 minute          |
+| **Reader Endpoints** | None                        | Multiple read endpoints |
+| **Cost**             | Lower                       | Higher                  |
+| **Use Case**         | High availability only      | HA + read scaling       |
 
 ## Common Use Cases for RDS
 
