@@ -285,8 +285,8 @@ executed only during the first boot cycle.
 
 ### Troubleshooting User Data
 ```shell
-jahid@jahid-HP-ProBook-6470b:/media/jahid/SSD_Remaining/1_In_Github_as_Single_Project/NOTES/DevOps$ chmod 400 "jahid.pem"
-jahid@jahid-HP-ProBook-6470b:/media/jahid/SSD_Remaining/1_In_Github_as_Single_Project/NOTES/DevOps$ ssh -i "jahid.pem" ubuntu@47.129.244.118
+jahid@<pc_name>:<path>$ chmod 400 "jahid.pem"
+jahid@<pc_name>:<path>$ ssh -i "jahid.pem" ubuntu@47.129.244.118
 ubuntu@ip-172-31-23-204:~$ sudo rm -rf /var/lib/cloud/instance/*
 ubuntu@ip-172-31-23-204:~$ sudo rm -rf /var/lib/cloud/data/*
 ubuntu@ip-172-31-23-204:~$ sudo cloud-init init --local
