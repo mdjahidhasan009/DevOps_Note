@@ -3,7 +3,7 @@ AWS Identity and Access Management (IAM) is a web service that helps you securel
 resources for your users.
 
 It enables you to manage permissions and policies for users, groups, and roles, ensuring that only authorized users can
-access specific AWS resources.
+access specific AWS resources. Its a global service.
 
 ## What is AWS IAM?
 IAM is a fundamental security service in AWS that acts as the gatekeeper for your AWS resources. It allows you to create 
@@ -16,13 +16,15 @@ checks IDs and permissions before allowing anyone into your AWS environment.
 - Individual people or entities that interact with AWS
 - Each user has unique security credentials
 - Can be assigned permissions directly or through groups
+- User can be use aws without being at any group, also can be assign at multiple groups
 - Best practice: Create individual users rather than sharing credentials
 
 ### Groups
 - Collections of users with similar access requirements
 - Permissions assigned to groups are inherited by all group members
-- Examples: Developers, Administrators, QA Team
+- Examples: Developers, Administrators, QA Team, people's from same organization
 - Users can belong to multiple groups
+- Group only containers user's not other groups
 
 ### Roles
 - Set of permissions that can be assumed by users, applications, or AWS services
@@ -50,14 +52,14 @@ checks IDs and permissions before allowing anyone into your AWS environment.
 * **Integration with Other AWS Services**: IAM integrates with many AWS services, allowing you to control access to
   resources like S3 buckets, EC2 instances, and more.
 * **Fine-Grained Access Control**: Define permissions at a granular level, allowing you to specify access to individual
-  resources or actions within a service.
+  resources or actions within a service, it should be as less permission as possible
 * **Audit and Monitoring**: Use AWS CloudTrail to log and monitor IAM actions, providing visibility into who accessed
   what resources and when.
 * **Free Service**: IAM is offered at no additional cost
 * **Global Service**: IAM operates globally across all AWS regions
 * **Root account created by default, shouldn't be used or shared**
 
-## IAM Policy Structure
+## IAM Policy Example
 ```json
 {
   "Version": "2012-10-17",
@@ -151,7 +153,7 @@ checks IDs and permissions before allowing anyone into your AWS environment.
 - Disable unused access keys
 
 ## AWS IAM Best Practices
-* **Avoid using root account except for account setup**.
+* **Avoid using root account except for account setup, it should not be used or shared**.
 * **Add user to a group and assign permission to group**
 * **Use password policy or MFA**
 * **Use ACCESS KEYS for CLI/SDK**
@@ -231,3 +233,4 @@ compliance issues.
 
 # Resources
 * [AWS in ONE VIDEO 🔥 For Beginners 2025 [HINDI] | MPrashant](https://www.youtube.com/watch?v=N4sJj-SxX00)
+* [Ultimate AWS Certified Solutions Architect Associate 2025 by Stephane Maarek](https://www.udemy.com/course/aws-certified-solutions-architect-associate-saa-c03)
