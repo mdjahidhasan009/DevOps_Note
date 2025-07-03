@@ -63,9 +63,14 @@ checks IDs and permissions before allowing anyone into your AWS environment.
 ```json
 {
   "Version": "2012-10-17",
+  "Id": "S3-Account-Permissions",
   "Statement": [
     {
+      "Sid": "1",
       "Effect": "Allow",
+      "Principal": {
+        "AWS": ["arn:aws:iam::123456789012:root"]
+      },
       "Action": [
         "s3:GetObject",
         "s3:PutObject"
@@ -83,11 +88,17 @@ checks IDs and permissions before allowing anyone into your AWS environment.
 
 ### Policy Elements
 - **Version**: Policy language version (usually "2012-10-17")
-- **Statement**: Main policy element containing permissions
-- **Effect**: Allow or Deny
-- **Action**: List of API actions the policy applies to
-- **Resource**: ARN of the resources the actions apply to
-- **Condition**: Optional conditions for when the policy applies
+- **Id**: Identifier for this policy(optional)
+- **Statement**: Main policy element containing permissions. One or more individual statement(required)
+  - A policy must have at least one statement.
+
+#### Statements consists of
+- **Sid(Statement ID)**: Identifier for the statement(optional) 
+- **Effect**: Whether the statement allows or denies access(Allow, Deny)
+- **Principal**: account/user/role to which policy applied to.
+- **Action**: List of API actions the policy applies to.
+- **Resource**: ARN of the resources the actions apply to.
+- **Condition**: Optional conditions for when the policy applies(optional)
 
 ## Types of IAM Policies
 
