@@ -25,7 +25,16 @@ for redundancy and low latency.
 Local Zones are an extension of AWS Regions that place compute, storage, and other select services closer to end-users
 to reduce latency for applications that require single-digit millisecond response times.
 
+## How can users access AWS?
 
+*   To access AWS, you have three options:
+    *   AWS Management Console (protected by password + MFA)
+    *   AWS Command Line Interface (CLI): protected by access keys
+    *   AWS Software Developer Kit (SDK) - for code: protected by access keys
+*   Access Keys are generated through the AWS Console
+*   Users manage their own access keys, access key like username and secrect access key like password.
+*   **Access Keys are secret, just like a password. Don't share them**
 
 # Resources
 * [AWS in ONE VIDEO 🔥 For Beginners 2025 [HINDI] | MPrashant](https://www.youtube.com/watch?v=N4sJj-SxX00)
+* [Ultimate AWS Certified Solutions Architect Associate 2025 by Stephane Maarek](https://www.udemy.com/course/aws-certified-solutions-architect-associate-saa-c03)

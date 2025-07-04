@@ -130,6 +130,15 @@ checks IDs and permissions before allowing anyone into your AWS environment.
 * **Create Service Roles**: Allow AWS services to perform actions on your behalf
 * **Set up Cross-Account Access**: Enable users from other AWS accounts to access your resources
 * **Implement Password Policies**: Define password complexity and rotation requirements
+  * Set a minimum password length
+  * Require specific character types:
+    * including uppercase letters
+    * lowercase letters
+    * numbers
+    * non-alphanumeric characters
+  * Allow all IAM users to change their own passwords
+  * Require users to change their password after some time (password expiration)
+  * Prevent password re-use
 
 ## AWS IAM Ways of accessing AWS
 * **The AWS Management Console** provides a graphical, web-based approach.
@@ -146,9 +155,21 @@ checks IDs and permissions before allowing anyone into your AWS environment.
 ## IAM Security Features
 
 ### Multi-Factor Authentication (MFA)
-- **Virtual MFA Device**: Smartphone apps like Google Authenticator, Authy
-- **Hardware MFA Device**: Physical devices like YubiKey
-- **SMS Text Message**: Phone-based verification (not recommended for root account)
+
+- **Virtual MFA Device**: Uses a time-based one-time password (TOTP) algorithm.
+  - *Examples*: Google Authenticator, Authy (3rd-party smartphone apps).
+
+- **Hardware MFA Device**: Physical security devices.
+  - **Universal 2nd Factor (U2F) Security Key**: A physical USB/NFC/Bluetooth key.
+    - *Example*: YubiKey (from 3rd-party Yubico).
+  - **Hardware Key Fob MFA Device**: A device that generates a rotating numeric code.
+    - *Example*: Provided by Gemalto (3rd-party).
+  - **Hardware Key Fob for AWS GovCloud (US)**: A FIPS 140-2 compliant hardware token.
+    - *Example*: Provided by SurePassID (3rd-party).
+
+- **SMS Text Message-based MFA**: A verification code is sent to your phone via SMS.
+  - **Note**: This method is not recommended for the root account due to being less secure than virtual or hardware MFA
+   devices.
 
 ### Password Policy
 - Minimum password length
@@ -241,6 +262,60 @@ compliance issues.
 - **Roles per account**: 1,000
 - **Policies per user/group/role**: 10 managed policies
 - **Policy size**: 2,048 characters for inline policies, 6,144 characters for managed policies
+
+
+## Practical
+### Passowrd Policy
+Go to IAM > Access Management > Account Settings. In account settings page there will be password policy card and then 
+click on "Edit" button on that card.
+
+On "Edit password policy" page > Password policy card there will be two options
+* IAM Default 
+  * For keeping default IAM options
+* Custom
+  * For creating custom IAM
+
+### Default options are 
+#### Password minimum length
+8 characters
+#### Password strength
+Include a minimum of three of the following mix of character types:
+* Uppercase
+* Lowercase
+* Numbers
+* Non-alphanumeric characters
+
+#### Other requirements
+* Never expire password
+* Must not be identical to your AWS account name or email address
+
+### Custom options
+We can change minimum length(Needs to be between 6 and 128)
+
+And can check or unchcheck 
+#### Password strength
+* Require at least one uppercase letter from the Latin alphabet (A-Z)
+* Require at least one lowercase letter from the Latin alphabet (a-z)
+* Require at least one number
+* Require at least one non-alphanumeric character ( ! @ # $ % ^ & * ( ) _ + - = [ ] {} | ' )
+
+##### Other requirements
+* Turn on password expiration
+  * If check then will be a box for number of days after it will expair.
+* Password expiration requires administrator reset
+* Allow users to change their own password
+* Prevent password reuse
+  * If check then will be a box for number of password aws will be remembers for preventing reuse.
+
+### Setup MFA
+Click on profile at the top right and on the list click on "Security credentials". At the "My security credentials" page
+at "Multi-factor authentication" card click on "Assign MFA device". Now it will open "Select MFA device" and give 
+a name of your device and select "Authenticator app" for MFA device and then click on "Next". 
+
+Now click on "Show QR code" and scan that at google authenticator app and type two code from google authenticator app
+and click on "Add MFA".
+
+From now AWS will ask for MFA code everytime while login.
 
 # Resources
 * [AWS in ONE VIDEO 🔥 For Beginners 2025 [HINDI] | MPrashant](https://www.youtube.com/watch?v=N4sJj-SxX00)
