@@ -203,9 +203,9 @@ checks IDs and permissions before allowing anyone into your AWS environment.
 
 ## IAM Monitoring and Auditing
 
-### Credential Report
+### IAM Credential Report(account-level)
 IAM Dashboard > Access Report > Credential Report > Download Credential Report. This report provides a comprehensive
-overview of your IAM users, their access keys, passwords, and MFA status, helping you identify any security gaps or
+overview of your all IAM users, their access keys, passwords, and MFA status, helping you identify any security gaps or
 compliance issues.
 
 ### Access Analyzer
@@ -219,6 +219,11 @@ compliance issues.
 - Tracks who made changes and when
 - Provides audit trail for compliance
 - Can trigger alerts for suspicious activities
+
+### IAM Access Advisor(user-level)
+- Access advisor shows the service permissions granted to a user, group, or role and the last accessed time for each 
+  service.
+- We can use this information to revise permissions and remove unused permissions.
 
 ## Common IAM Use Cases
 
@@ -264,8 +269,8 @@ compliance issues.
 - **Policy size**: 2,048 characters for inline policies, 6,144 characters for managed policies
 
 
-## Practical
-### Passowrd Policy
+# Practical
+## Password Policy
 Go to IAM > Access Management > Account Settings. In account settings page there will be password policy card and then 
 click on "Edit" button on that card.
 
@@ -292,7 +297,7 @@ Include a minimum of three of the following mix of character types:
 ### Custom options
 We can change minimum length(Needs to be between 6 and 128)
 
-And can check or unchcheck 
+And can check or uncheck 
 #### Password strength
 * Require at least one uppercase letter from the Latin alphabet (A-Z)
 * Require at least one lowercase letter from the Latin alphabet (a-z)
@@ -307,15 +312,58 @@ And can check or unchcheck
 * Prevent password reuse
   * If check then will be a box for number of password aws will be remembers for preventing reuse.
 
-### Setup MFA
+## Setup MFA
 Click on profile at the top right and on the list click on "Security credentials". At the "My security credentials" page
 at "Multi-factor authentication" card click on "Assign MFA device". Now it will open "Select MFA device" and give 
 a name of your device and select "Authenticator app" for MFA device and then click on "Next". 
 
-Now click on "Show QR code" and scan that at google authenticator app and type two code from google authenticator app
+Now click on "Show QR code" and scan that at Google authenticator app and type two code from google authenticator app
 and click on "Add MFA".
 
 From now AWS will ask for MFA code everytime while login.
+
+## Create Security Key
+Goes to IAM > Users > Select your user > Click "Security credentials" tab. At Access Key card click on "Create access key".
+Now it will open "Create access key" page. Select "Command line interface (CLI)" and click on "Next" and save those
+Access Key and Secret Access Key in a safe place. You will not be able to see the secret access key again.
+
+## Creating an IAM role for EC2
+Goes to IAM > Roles, now click on "Create Role". On Create role page there will be Select trusted Entity Step from here
+inside Trusted entity type card select AWS service. And from Use case card > Service or use case, select EC2 and from 
+"Choose a use case for the specified service" select EC2 and click on "Next" button. 
+
+And now from "Add permissions" step select "IAMReadOnlyAccess" policy and click on "Next" button.
+
+Now from "Name, review, and create" step and at "Role details" card giving role name as "DemoRoleForEC2ForCourse" and 
+description "Allows EC2 instances to call AWS services on your behalf." was automatically added, and we are keeping 
+that. It will also will show "Step 1: Select trusted entities"
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "sts:AssumeRole"
+      ],
+      "Principal": {
+        "Service": [
+          "ec2.amazonaws.com"
+        ]
+      }
+    }
+  ]
+}
+```
+"Step 2: Add permissions" which is we already added IAMReadOnlyAccess policy. And click on "Create role" button.
+
+## Report
+### Credential Report
+IAM > Access Management > Access Reports > Credential Report. Click on "Download credential report".
+
+### Access Advisor(Now it as Last Accessed)
+IAM > Users, select the desired user > click on "Last accessed" tab. This will show the services that the user has
+accessed and the last time they accessed each service. This helps in identifying unused permissions and services.
 
 # Resources
 * [AWS in ONE VIDEO 🔥 For Beginners 2025 [HINDI] | MPrashant](https://www.youtube.com/watch?v=N4sJj-SxX00)
