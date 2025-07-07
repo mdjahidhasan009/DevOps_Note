@@ -11,12 +11,16 @@ run on Amazon's proven computing environment.
 ## Key Components of EC2 Instance
 When launching an EC2 instance, you need to configure several components:
 
-- **OS** (Operating System)
+- **OS** (Operating System) Linux, Windows or Mac OS
 - **RAM** (Memory)
 - **CPU** (Processing Power)
-- **Disk Space** (Storage)
+- **Disk Space** (Storage) 
+  - **Network Attached** EBS(Elastic Block Store), EFS(Elastic File System), 
+  - nstance Store (Ephemeral Storage)
 - **Network/Firewall** (Security Groups)
 - **How to access the machine?** (Key Pairs, SSH/RDP)
+- **Scaling** Auto Scaling Group (ASG), Load Balancing (ELB)
+- **Network Card**: Speed of the card, public ip address
 
 ## EC2 Instance Configuration Options
 
@@ -27,7 +31,7 @@ When launching an EC2 instance, you need to configure several components:
 * **Key Pair**: Create or use an existing key pair for SSH access.
 * **Network Settings**: Configure VPC, subnet, and assign public or private IP addresses.
 * **IAM Role**: Attach an IAM role for permissions to access other AWS resources.
-* **User Data**: Add scripts to be executed when the instance starts.
+* **User Data(Boostrap Script)**: Add scripts to be executed when the instance starts.
 * **Elastic IP**: Optionally associate a static IP address for consistent public access.
 
 ### Amazon Machine Image (AMI)
@@ -44,6 +48,8 @@ required to launch your instance. AWS provides several types of AMIs:
 - **Instance Store**: Temporary storage directly attached to the host computer
 - **EFS (Elastic File System)**: Scalable file storage for use with EC2 instances
 - **S3**: Object storage accessible via API
+
+
 
 ## Types of EC2 Instances
 EC2 instances come in various types, each optimized for different use cases. The main categories include:
@@ -85,6 +91,15 @@ Instance sizes follow a pattern: `family.size`
 * **Distributed Analytics**: i3.16xlarge, i4i.32xlarge
 * **Web Applications**: t3.medium, m5.large
 * **Development/Testing**: t3.micro, t3.small
+
+
+| Instance        | vCPU | Mem (GiB) | Storage             | Network Performance | EBS Bandwidth (Mbps) |
+| :-------------- | :--- | :-------- | :------------------ | :------------------ | :------------------- |
+| `t2.micro`      | 1    | 1         | EBS-Only            | Low to Moderate     | -                    |
+| `t2.xlarge`     | 4    | 16        | EBS-Only            | Moderate            | -                    |
+| `c5d.4xlarge`   | 16   | 32        | 1 x 400 NVMe SSD    | Up to 10 Gbps       | 4,750                |
+| `r5.16xlarge`   | 64   | 512       | EBS Only            | 20 Gbps             | 13,600               |
+| `m5.8xlarge`    | 32   | 128       | EBS Only            | 10 Gbps             | 6,800                |
 
 ## Purchasing Options
 
