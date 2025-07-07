@@ -3,10 +3,16 @@
 AWS EC2 (Amazon Elastic Compute Cloud) is a cloud service that provides resizable virtual servers, called instances,
 which you can use to run applications.
 
+
+
+
 ## What is AWS EC2?
 Amazon EC2 is a web service that provides secure, resizable compute capacity in the cloud. It is designed to make 
 web-scale cloud computing easier for developers by providing complete control over computing resources and letting you 
 run on Amazon's proven computing environment.
+
+
+
 
 ## Key Components of EC2 Instance
 When launching an EC2 instance, you need to configure several components:
@@ -21,6 +27,9 @@ When launching an EC2 instance, you need to configure several components:
 - **How to access the machine?** (Key Pairs, SSH/RDP)
 - **Scaling** Auto Scaling Group (ASG), Load Balancing (ELB)
 - **Network Card**: Speed of the card, public ip address
+
+
+
 
 ## EC2 Instance Configuration Options
 
@@ -51,14 +60,40 @@ required to launch your instance. AWS provides several types of AMIs:
 
 
 
+
 ## Types of EC2 Instances
 EC2 instances come in various types, each optimized for different use cases. The main categories include:
-* **General Purpose**: Balanced CPU, memory, and network resources (e.g., t3, m5).
-* **Compute Optimized**: High CPU performance for compute-intensive tasks (e.g., c5).
-* **Memory Optimized**: High memory capacity for memory-intensive applications (e.g., r5).
+* **General Purpose**: Great for diversity of workloads such as web servers or code repositories. **t2, t3, m5, etc.**
+  * Balanced between
+    * **CPU**, 
+    * **memory**, 
+    * **network** 
+* **Compute Optimized**: Greate for compute-intensive tasks requires high performance processing power. **c5, c6i, etc.**
+  * **Batch Processing**: Suitable for tasks that can be parallelized, such as data analysis and rendering
+  * **Gaming**: Ideal for game servers that require high CPU performance
+  * **Media Transcoding**: Efficient for converting media formats and resolutions
+  * **High Performance web sever**: Optimized for high-performance web servers that require low latency and high
+    throughput
+  * **High Performance Computing (HPC)**: Suitable for scientific modeling, simulations, and complex calculations
+  * **Scientific modeling, simulations, and machine learning**: Ideal for tasks that require high computational power,
+    such as scientific simulations and machine learning training
+* **Memory Optimized**: Fast performance for workloads that process large data sets in memory (e.g., r5).
+  * High performance, relational/non-relational databases.
+  * Distributed web scale cache stores.
+  * In-memory databases for real-time analytics or in-memory databases for BI(Business Intelligence) applications.
+  * **Real-time big data analytics**: Suitable for processing large volumes of data in real-time, such as log analysis 
+    and stream processing(can be used with Apache Kafka or Apache Spark).
+* **Storage Optimized**: Storage intensive tasks that require high, sequential read and write(IOPS) access to large
+  data sets on local storage (e.g., i3).
+  * High frequency online transaction processing (OLTP) systems.
+  * Relational and non-relational databases.
+  * Cache for in-memory databases(for example, Redis or Memcached).
+  * Data warehousing applications that require high throughput and low latency.
+  * Distributed file systems and big data workloads that require high storage throughput and low latency.
 * **Accelerated Computing**: Instances with hardware accelerators like GPUs (e.g., p3, g4).
-* **Storage Optimized**: High disk throughput and IOPS for data-intensive workloads (e.g., i3).
 * **High Performance Computing (HPC)**: Optimized for high-performance computing tasks (e.g., hpc6id).
+
+https://aws.amazon.com/ec2/instance-types/
 
 ### Instance Type Families
 - **T-series**: Burstable performance instances (t3, t4g)
@@ -71,12 +106,14 @@ EC2 instances come in various types, each optimized for different use cases. The
 - **G-series**: GPU instances for graphics workloads (g4, g5)
 
 ### Instance Size Naming Convention
-Instance sizes follow a pattern: `family.size`
-- nano, micro, small, medium, large, xlarge, 2xlarge, 4xlarge, etc.
-- Example: t3.micro, m5.large, c5.4xlarge
+Instance sizes follow a pattern: `instance_family+genation.size`
+- **instance_family**: The type of instance (e.g., t3, m5, c5)
+- **generation**: The generation of the instance 3, 4, 5, etc.
+- **size**: The size of the instance, which indicates its resources like `micro`, `small`, `medium`, `large`, etc.
+- **Example**: `t3.micro`, `m5.large`, `c5.4xlarge`
 
 ### Use Case Examples
-* **Case 1: Small Website or Blog**
+* **Case 1: Small Website or Blog, web server or code repository**
   * Suitable Type: t3.micro or t3.small (General Purpose)
 * **Case 2: E-Commerce Application**
   * Suitable Type: m5.large or m5.xlarge (General Purpose)
@@ -100,6 +137,9 @@ Instance sizes follow a pattern: `family.size`
 | `c5d.4xlarge`   | 16   | 32        | 1 x 400 NVMe SSD    | Up to 10 Gbps       | 4,750                |
 | `r5.16xlarge`   | 64   | 512       | EBS Only            | 20 Gbps             | 13,600               |
 | `m5.8xlarge`    | 32   | 128       | EBS Only            | 10 Gbps             | 6,800                |
+
+https://instances.vantage.sh/
+
 
 ## Purchasing Options
 
@@ -137,21 +177,34 @@ Instance sizes follow a pattern: `family.size`
 - **EC2 Instance Savings Plans**: Lower prices for specific instance families in specific regions
 - Automatic application to usage
 
+
+
+
 ## Security Groups
 Security groups act as virtual firewalls for your EC2 instances, controlling inbound and outbound traffic. They allow
 you to specify rules based on protocols, ports, and source/destination IP addresses. Security groups are stateful,
-meaning if you allow incoming traffic on a specific port, the response traffic is automatically allowed.
+meaning if you allow incoming traffic on a specific port, the response traffic is automatically allowed. They control
+how traffic is allowed into or out of our EC2 instances. Security groups rules can be reference by IP or by security 
+group.
 
 ### Important points about security groups
 * **Region specific**
 * **Only 'Allow' rule** (but no deny rule)
-* **All inbound traffic blocked and outbound allowed by default**.
+* **All inbound traffic blocked and all outbound allowed by default**.
 * You define rules for specific:
-  * Protocols (like HTTP, HTTPS, SSH, etc.).
-  * Port numbers (e.g., port 80 for HTTP, port 22 for SSH).
-  * IP addresses or ranges (e.g., allow traffic only from a specific IP or range of IPs).
+  * Allowed protocols (like HTTP, HTTPS, SSH, etc.).
+  * Allowed port numbers (e.g., port 80 for HTTP, port 22 for SSH).
+  * Allowed IP(IPv4 and IPv6) addresses or ranges (e.g., allow traffic only from a specific IP or range of IPs).
 * If you allow incoming traffic on a specific port (e.g., port 80 for HTTP), the outgoing response traffic is
   automatically allowed without an explicit outbound rule.
+* Control of inbound network(from other to the instance) 
+* Control outbound network(from the instance to others)
+* Can be attached to multiple instances
+* Locked down to a region and VPC
+* Does live "outside" the EC2 instance - if traffic is blocked the EC2 instance won't see it.
+* It's good to maintain one separate security group for SSH access.
+* If application is not accessible (time out), then it's a security group issue.
+* If application gives a "connection refused" error, then it's an application issue, or it's not launched.
 
 ### Security Group Features
 - **Stateful**: Return traffic is automatically allowed
@@ -174,12 +227,13 @@ Each rule consists of:
 * **HTTPS (Port 443)** – Encrypted web traffic (SSL/TLS).
 * **SSH (Port 22)** – Secure remote access to servers (Linux/Unix).
 * **FTP (Port 21)** – File Transfer Protocol (unsecured).
-* **SFTP (Port 22)** – Secure File Transfer Protocol.
+* **SFTP (Port 22)** – Secure File Transfer Protocol using SSH.
 * **SMTP (Port 25)** – Simple Mail Transfer Protocol (email sending).
 * **RDP (Port 3389)** – Remote Desktop Protocol (Windows remote access).
 * **MySQL (Port 3306)** – MySQL database connections.
 * **PostgreSQL (Port 5432)** – PostgreSQL database connections.
 * **DNS (Port 53)** – Domain Name System (converts domain names to IP addresses).
+* **Remote Desktop Protocol (RDP) (Port 3389)** – Remote access to Windows instances.
 
 ### Additional Common Ports
 * **Telnet (Port 23)** – Unencrypted remote access (not recommended)
@@ -191,6 +245,9 @@ Each rule consists of:
 * **LDAPS (Port 636)** – LDAP over SSL/TLS
 * **MongoDB (Port 27017)** – MongoDB database connections
 * **Redis (Port 6379)** – Redis database connections
+
+
+
 
 ## User Data Script -> Startup Commands for EC2 Instance
 

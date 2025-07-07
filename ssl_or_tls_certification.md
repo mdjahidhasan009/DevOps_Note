@@ -137,12 +137,12 @@ CAs ensure the authenticity and integrity of the SSL certificates they provide.
 
 ### Formats for digital certificates
 
-| Format  | Encoding        | Common Extensions   | Usage                         | Contains Private Key          |
-| :------ | :-------------- | :------------------ | :---------------------------- | :---------------------------- |
-| PEM     | Base64          | .pem, .crt, .cer    | Web servers, email            | No (unless it's a key file)   |
-| DER     | Binary          | .der, .cer          | Java platforms, binary data   | No                            |
-| PKCS#7  | Base64 or Binary | .p7b, .p7c          | Certificate chains            | No                            |
-| PKCS#12 | Binary          | .p12, .pfx          | Export/import certs with keys | Yes                           |
+| Format   | Encoding         | Common Extensions    | Usage                          | Contains Private Key           |
+|:---------|:-----------------|:---------------------|:-------------------------------|:-------------------------------|
+| PEM      | Base64           | .pem, .crt, .cer     | Web servers, email             | No (unless it's a key file)    |
+| DER      | Binary           | .der, .cer           | Java platforms, binary data    | No                             |
+| PKCS#7   | Base64 or Binary | .p7b, .p7c           | Certificate chains             | No                             |
+| PKCS#12  | Binary           | .p12, .pfx           | Export/import certs with keys  | Yes                            |
 
 
 
