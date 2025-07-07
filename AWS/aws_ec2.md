@@ -247,7 +247,14 @@ Each rule consists of:
 * **Redis (Port 6379)** – Redis database connections
 
 
+# SSH Summary Table
 
+| Platform      | SSH  | Putty  | EC2 Instance Connect |
+|---------------|------|--------|----------------------|
+| Mac           | ✓    |        | ✓                    |
+| Linux         | ✓    |        | ✓                    |
+| Windows < 10  |      | ✓      | ✓                    |
+| Windows >= 10 | ✓    | ✓      | ✓                    |
 
 ## User Data Script -> Startup Commands for EC2 Instance
 
