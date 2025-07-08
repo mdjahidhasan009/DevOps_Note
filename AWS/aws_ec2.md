@@ -461,6 +461,55 @@ sudo cloud-init status
 sudo cloud-init query --all
 ```
 
+
+
+## Attach IAMReadOnlyAccess policy with EC2
+
+```shell
+sudo apt-get update
+sudo apt-get install python3-pip
+sudo pip install awscli
+
+
+sudo apt install -y unzip curl
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+aws --version
+```
+
+Now before adding the `IAMReadOnlyAccess` to the EC2 instance we are getting error
+```shell
+ubuntu@ip-172-31-27-115:~$ aws iam list-users
+
+Unable to locate credentials. You can configure credentials by running "aws configure".
+```
+
+As the cli does not have access to the IAM. As We are using EC2 intance connect if we add our aws secrect key to this
+then any one has access to this EC2 can have our credential. So we can add `IAMReadOnlyAccess` with this EC2 so it will
+able to get our IAM. 
+
+Select the instance click on "Action" > Security > Modify IAM Role. Now at modify IAM role page at IAM role input select
+our created role with has `IAMReadOnlyAccess` and click on "Update IAM role".
+
+Now from the shell we will see the list user
+```shell
+ubuntu@ip-172-31-27-115:~$ aws iam list-users
+{
+    "Users": [
+        {
+            "Path": "/",
+            "UserName": "jahid",
+            "UserId": <userId>,
+            "Arn": <arn>,
+            "CreateDate": <date>,
+            "PasswordLastUsed": <date>
+        }
+    ]
+}
+```
+
+
 ## EC2 Instance Lifecycle
 
 ### Instance States
