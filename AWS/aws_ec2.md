@@ -143,14 +143,14 @@ https://instances.vantage.sh/
 
 ## Purchasing Options
 
-| Purchasing Option       | Best for                                                                               | Cost                                | Commitment                    | Flexibility                   |
-|-------------------------|----------------------------------------------------------------------------------------|-------------------------------------|-------------------------------|-------------------------------|
-| **On-Demand**           | Short-term, unpredictable workloads                                                    | High                                | None                          | High                          |
-| **Reserved Instances**  | Long-term, steady workloads (1-3 years)                                                | Medium to Low (Up to 75% off)       | 1 or 3 years                  | Low                           |
-| **Spot Instances**      | Fault-tolerant, flexible, batch jobs, big data, CI/CD, distributed computing           | Very Low (Up to 90% off)            | None (subject to termination) | Medium (can be interrupted)   |
-| **Savings Plans**       | Consistent workloads but needing more flexibility than Reserved Instances              | Medium to Low (Up to 72% off)       | 1 or 3 years                  | High (more flexible than RI)  |
-| **Dedicated Hosts**     | Workloads requiring complete hardware control (compliance, software licensing)         | High                                | 1 or 3 years                  | Medium                        |
-| **Dedicated Instances** | Workloads needing physical isolation without full control over the hardware            | High                                | None                          | Medium                        |
+| Purchasing Option       | Best for                                                                               | Cost                                        | Commitment                    | Flexibility                   |
+|-------------------------|----------------------------------------------------------------------------------------|---------------------------------------------|-------------------------------|-------------------------------|
+| **On-Demand**           | Short-term, unpredictable workloads                                                    | High, predictable pricing -> pay by second  | None                          | High                          |
+| **Reserved Instances**  | Long-term, steady workloads (1-3 years)                                                | Medium to Low (Up to 75% off)               | 1 or 3 years                  | Low                           |
+| **Spot Instances**      | Fault-tolerant, flexible, batch jobs, big data, CI/CD, distributed computing           | Very Low (Up to 90% off)                    | None (subject to termination) | Medium (can be interrupted)   |
+| **Savings Plans**       | Consistent workloads but needing more flexibility than Reserved Instances              | Medium to Low (Up to 72% off)               | 1 or 3 years                  | High (more flexible than RI)  |
+| **Dedicated Hosts**     | Workloads requiring complete hardware control (compliance, software licensing)         | High                                        | 1 or 3 years                  | Medium                        |
+| **Dedicated Instances** | Workloads needing physical isolation without full control over the hardware            | High                                        | None                          | Medium                        |
 
 ### Detailed Purchasing Options
 
