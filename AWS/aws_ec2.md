@@ -439,12 +439,168 @@ Create request ----> |  (open) | -----------------> (failed)
               +----[persistent]---> (Back to open)
 ```
 
+# Creating Spot Instances
+From EC2 > Instances > Spot Request, click on "Create Spot Fleet request".
+
+## Launch Configuration Method
+- **Manually configure launch parameters:** Select an AMI and configure optional parameters individually.
+- **Use a launch template:** Use a pre-configured template for faster instance launches.
+
+_After selection, you specify the **AMI** and **Key Pair**._
+
+### Additional Launch Parameters (Optional)
+
+#### EBS-optimized
+Enables dedicated, high-throughput connection between the EC2 instance and its EBS volumes for improved performance. We 
+can enable this by simply checking the box at left of **Launch EBS-optimized instances**
+
+#### Instance Store
+Provides temporary, block-level storage. Data on an instance store persists only for the lifetime of the instance (data 
+is lost on stop/termination). We can enable this by simply checking the box at lef of **Attach at launch**
+
+### EBS Volumes
+You can add, remove, and configure EBS volumes for persistent storage. There already will be one root volume attached
+to the instance, but you can add additional volumes as needed.
+
+| Device           | Snapshot      | Size (GiB) | Volume Type               | IOPS  | Throughput | Delete on Term. | Encrypted |
+|:-----------------|:--------------|:-----------|:--------------------------|:------|:-----------|:----------------|:----------|
+| `Root:/dev/xvda` | `snap-083...` | 8          | General Purpose SSD (gp2) | N/A   | N/A        | ✅               | No        |
+
+### Monitoring
+Monitor, collect, and analyze instance metrics through Amazon CloudWatch. The default is free, basic monitoring, where
+data is available in 5-minute periods. You can enable detailed monitoring, where data is available in 1-minute periods 
+(additional charges apply). We can enable this by simply checking the box at left of **Enable CloudWatch detailed 
+monitoring**.
+
+### Tenancy
+Your instance runs on hardware shared with other AWS customers. You can also choose dedicated hardware. Options are:
+* **Default - run a shared hardware instance** The instance runs on hardware shared with other AWS customers. This is 
+  the most cost-effective option.
+* **Dedicated - run on dedicated hardware** The instance runs on a physical server dedicated to your use. This is useful
+  for compliance or licensing requirements.
+
+### Security Groups
+A stateful firewall that controls inbound and outbound traffic for your instance. You can select one or more existing
+security groups or create a new one.
+
+### Auto-assign IPv4 public IP
+Assigns a public IPv4 address to your instance at launch, making it reachable from the Internet. Can be set to use the 
+subnet's default setting or enabled or disabled explicitly. If enabled, the instance will receive a public IP
+address, allowing it to communicate with the Internet. If disabled, the instance will not receive a public IP address,
+and it will only be reachable within the VPC or through a VPN or Direct Connect connection.
+
+### IAM instance profile
+A container for an IAM role that grants permissions to the EC2 instance to access other AWS services. Can select an 
+existing IAM role or create a new one. This is useful for granting the instance permissions to access other AWS
+services, such as S3 or DynamoDB, without needing to manage access keys. If you don't select an IAM role, the instance
+will not have any permissions to access other AWS services.
+
+### User data
+- A script provided during launch to perform automated configuration tasks or run software.
+- **Input Methods:** Can be provided as plain text or from a file.
+- **Encoding:** A checkbox is available if the input is already Base64 encoded.
 
 
+## Additional Request Details
+
+If we check "Apply defaults" then IAM fleet role will be set and the request will be valid for 1 year. 
+
+If we check this then all the options will be available for configuration at below of this line.
+
+### IAM fleet role
+None is default. And can select any existing IAM role or create a new one. This role grants the Spot Fleet permission to
+launch and manage instances on your behalf. It is required for the Spot Fleet to function properly.
+
+### Request Validity Period
+- **Request valid from:** The start date and time for the Spot request to become active.
+    - *Example:* `2025/07/09 22:59`
+- **Request valid until:** The expiration date and time for the Spot request.
+    - *Example:* `2026/07/09 22:59`
+- **Terminate instances when request expires:** An option to automatically terminate all instances in the fleet when the
+  request's validity period ends if it is checked. If not checked, the instances will continue to run until they are
+  manually terminated or interrupted by AWS.
+
+### Load Balancing
+Automatically register instances launched by the Spot Fleet with one or more load balancers to distribute traffic. If
+we checked this option then the blow options will be available for configuration.
+- **Classic Load Balancers:**
+    - Select an existing Classic Load Balancer.
+    - Option to create a new one.
+- **Target Groups:**
+    - Used with Application Load Balancers (ALB) and Network Load Balancers (NLB).
+    - Select a target group where the Spot instances will be registered as targets.
+
+## Target Capacity
+
+### Total Target Capacity
+- **Total target capacity:** Defines the desired size of the fleet, specified in **instances** or **vCPUs** or **memory**.
+    - _Example: `1` instances._
+- **Include On-Demand base capacity:** Option to allocate a fixed number of instances as On-Demand, which are guaranteed
+  and not subject to Spot interruptions. The remaining capacity is filled by Spot Instances.
+
+### Capacity Maintenance & Interruption
+**Maintain target capacity:** If we checked this then "Interruption behavior" and "Capacity rebalance" will be available.
+the fleet will automatically launch replacements for any Spot Instances that are interrupted, ensuring the fleet size 
+remains at its target.
+- **Interruption behavior:** Defines what happens when a Spot Instance is reclaimed by AWS.
+    - **Terminate:** The instance is shut down and terminated.
+    - **Stop:** The instance is stopped and can be restarted later, but it will not count towards the target capacity.
+    - **Hibernate:** The instance is hibernated, preserving its state, and can be resumed later. This option is only 
+      available for certain instance types and requires EBS-backed instances.
+- **Capacity rebalance:** A proactive feature where Spot Fleet attempts to replace an instance that has received a
+  rebalance notification (a warning of an upcoming interruption). If we checked this then the following options will be
+  available.
+    - **Instance replacement strategy:**
+        - **Launch only:** The fleet launches a new replacement instance but **does not** terminate the original 
+          instance that received the rebalance warning.
+        - **Launch before terminate:** Replacement instances will be launched and instances marked for rebalance will be
+          automatically terminated after the termination delay.
+
+_**Note:** You are charged for both the old and new instances until the original one is either manually terminated or 
+interrupted by EC2._
+
+### Cost Management
+**Set maximum cost for Spot Instances:** Sets a ceiling on the total price you are willing to pay **per hour** for all
+the Spot Instances in your fleet. If we checked this then the input box "Set your max cost(per hour)" will appear.
+
+_Example: Set your max cost to `$` [amount] per hour._
+
+## Network 
+Here we will select vpc and az.
+
+## Instance type requirements
+- **Specify instance attributes:** Let AWS automatically select instance types for you based on your defined 
+  minimum/maximum requirements for:
+    - **vCPUs**
+    - **Memory (GiB)**
+    - Other optional attributes
+
+- **Manually select instance types:** Directly choose the specific instance types (e.g., `t3.micro`, `m5.large`) you 
+want to use.
 
 
+### Additional Instance Attributes (Optional)
+- **Purpose:** To further refine the automatic instance selection beyond just vCPU and memory.
+- **Action:** Add specific requirements like network performance, CPU architecture, storage type, etc., to narrow down 
+  the pool of suitable instance types.
 
+### Preview matching instance types
+Will show the list of instance types that match your requirements. This is useful to verify that the selected instance 
+types meet your needs before launching the Spot Fleet.
 
+## Spot Allocation Strategy
+
+Determines how Spot Fleet selects from available instance pools to fulfill your request.
+
+-   **Price capacity optimized (recommended):** Balances the lowest price with the most available pools. Best for most 
+    workloads.
+-   **Capacity optimized:** Prioritizes pools with the most available capacity to minimize the risk of interruption.
+-   **Diversified:** Spreads instances evenly across all available pools. *(Cannot be used with attribute-based instance
+    selection.)*
+
+## Summary of fleet
+There will be card saying "Your fleet request at a glance" where will a glance of my current fleet. With info like
+Total target capacity, Instance requirements, Fleet strength, Estimated hourly price
 
 ### Detailed Purchasing Options
 
