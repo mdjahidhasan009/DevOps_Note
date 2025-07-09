@@ -259,6 +259,193 @@ https://instances.vantage.sh/
 | Dedicated Host Reservation             | Up to 70% off                              |
 | Capacity Reservations                  | On-Demand Price                            |
 
+
+# Spot Request
+For seeing pricing history from EC2 > Instances > Spot Requests, click on "Pricing history" button. It will open popup
+"Spot Instance pricing history" with a graph showing the price history with some filters.
+
+Of course. Here is the information from your slide and note, refactored into a Markdown format suitable for study notes.
+
+***
+
+# EC2 Spot Instances
+
+EC2 Spot Instances offer a way to leverage spare Amazon EC2 computing capacity at discounts of up to 90% compared to On-Demand pricing. They are an excellent choice for workloads that can tolerate interruptions.
+
+## How Spot Instances Work
+
+*   **Pricing Model:** The price for Spot Instances (the "spot price") fluctuates based on real-time supply and demand 
+    for spare EC2 capacity. You pay the current spot price for the time your instance is running.
+*   **Bidding Strategy:** You define a maximum price you are willing to pay per hour. Your instance will run whenever
+    the current spot price is below your specified maximum.
+    *   **Best Practice:** In most cases, it's recommended not to specify a maximum price. The default behavior caps 
+    your price at the standard On-Demand rate, which prevents you from overpaying and simplifies management.
+*   **Interruption Model:** The defining characteristic of Spot Instances is that AWS can reclaim them at any time if 
+    the capacity is needed elsewhere.
+    *   You receive a **two-minute interruption notice** before the instance is stopped or terminated, giving your 
+        application a short grace period to save its state or complete current tasks.
+
+## Use Cases
+
+The interruptible nature of Spot Instances makes them ideal for specific types of workloads.
+
+### ✅ Ideal Use Cases
+*   **Fault-tolerant and stateless applications.**
+*   **Batch processing jobs:** Large-scale rendering, media transcoding, or scientific simulations.
+*   **Big data and analytics:** Running jobs on frameworks like Hadoop or Spark.
+*   **CI/CD and testing environments:** Running builds and tests that can be easily restarted.
+
+### ❌ Unsuitable Use Cases
+*   **Critical production workloads** that require high availability (e.g., e-commerce websites).
+*   **Stateful applications** like single-node databases that cannot easily handle sudden termination.
+
+## Deprecated Feature: Spot Blocks
+
+Spot Blocks were a variation of Spot Instances that allowed you to request an instance for a predefined, continuous 
+duration (from 1 to 6 hours) with a lower probability of being interrupted.
+
+*   A Spot Fleet is a collection of Spot Instances, and can optionally include On-Demand Instances to meet a target
+    capacity.
+
+*   The fleet attempts to meet the target capacity based on your defined constraints.
+    *   You define multiple **launch pools** (e.g., instance type, OS, Availability Zone).
+    *   Having multiple pools gives the fleet flexibility to find capacity.
+    *   The fleet stops launching new instances once the target capacity or maximum cost is reached.
+*   **Allocation Strategies for Spot Instances:**
+    *   `lowestPrice`: Launches from the pool with the lowest price. Best for cost optimization and short workloads.
+    *   `diversified`: Distributes instances across all defined pools. Best for availability and long-running workloads.
+    *   `capacityOptimized`: Launches from the pool with the optimal capacity, reducing the chance of interruption.
+    *   `priceCapacityOptimized` **(Recommended)**: Chooses from pools with the highest capacity available, and then 
+         picks the one with the lowest price. This is the best choice for most workloads.
+
+*   Spot Fleets provide a way to automatically request Spot Instances that meet your cost and capacity needs.
+
+> #### ⚠️ Important Note on Deprecation
+>
+> Spot Blocks are a legacy feature and are **no longer supported**.
+>
+> *   They became unavailable to new AWS customers on **July 1, 2021**.
+> *   Support for all customers ended on **December 31, 2022**.
+>
+> **Exam Note:** While this feature is obsolete, older exam questions *might* still reference the concept. It is useful 
+> to know what they were, but your primary focus should be on the standard Spot Instance model.
+
+
+# Managing and Terminating Spot Instances
+
+Understanding the lifecycle of a Spot Request is crucial for managing your instances effectively. The process isn't as
+simple as terminating a standard On-Demand instance because the request itself can persist and launch new instances.
+
+## Spot Request Lifecycle
+
+When you create a Spot Instance request, you define its behavior, which falls into two main types:
+
+*   **One-Time Request:** You request one or more instances for a single fulfillment. Once the instances are launched 
+    and later interrupted (either by you or by AWS), the request is `closed` and will not attempt to launch new 
+    instances.
+*   **Persistent Request:** The goal of this request is to maintain a target capacity. If an instance is interrupted or 
+    stopped, the Spot service will automatically try to launch a replacement instance to fulfill the request again once 
+    capacity is available and the spot price is below your maximum.
+
+## Spot Request State Machine
+
+A Spot Request moves through several states during its lifecycle:
+
+*   `open`: The request has been created and is waiting for the Spot service to find available capacity at a suitable 
+    price.
+*   `active`: The request has been fulfilled, and the associated Spot Instances have been launched and are running.
+*   `failed`: The request could not be fulfilled due to invalid parameters or other issues.
+*   `cancelled`: The user has manually cancelled the request.
+*   `closed`: A **one-time** request has finished its lifecycle (e.g., after its instance was terminated).
+*   `disabled`: A **persistent** request is temporarily inactive. This happens if you stop its associated instance or 
+    if it's interrupted by AWS. The request will attempt to become `open` again if re-enabled or if capacity returns.
+
+## How to Properly Terminate Spot Instances
+
+This is a critical two-step process. Simply terminating the instance is not enough for persistent requests.
+
+> **Key Rule:** Cancelling a Spot Request **does not** automatically terminate the running instances associated with it.
+
+To permanently stop using Spot Instances and avoid unexpected charges, you must follow this order:
+
+1.  **Cancel the Spot Instance Request First:** This is the most important step. It tells AWS to stop trying to fulfill 
+    the request. If you skip this, a persistent request will simply launch a new instance after you terminate the 
+    current one.
+    *   You can only cancel requests that are in the `open`, `active`, or `disabled` states.
+2.  **Terminate the Associated Spot Instances:** After the request is cancelled, you can safely terminate any running 
+    Spot Instances. They will not be replaced.
+
+
+### Diagram 1: Spot Request Flow
+
+Here is a text-based representation of the Spot Request and Instance flow diagram.
+
+*   **Interrupt (persistent):** An **involuntary** action initiated by **AWS**. It happens because AWS needs the 
+    capacity back. The persistent request will automatically try to get a new instance later.
+*   **Stop (persistent):** A **voluntary** action initiated by **You (the user)**. You are choosing to pause the 
+    instance. The persistent request will wait for you to start it again.
+
+
+```
+                                                          
+                                                           start(persistent)  <------------- Stop (persistent)
+                                                                |                                     ↑
+                                                                |     -- Interrupt (persistent) <-----|                            
+                                                                |     |                               |
+                                                                ↓     ↓                               |                      
+                               +---------------------------------------+                              |
+Create request --------------> |            Spot request               |                              |
+                               | - Maximum price                       |                              |
+                               | - Desired number of instances         |-- Launch instances --> +-----------+
+                               |                                       |                        |  [EC2] xN |  
+                               | - Launch specification                |                        +-----------+
+                               | - Request type: one-time | persistent |                               |  |
+                               | - Valid from, Valid until             |                                  |
+                               +---------------------------------------+                                  |
+                                       |                                                                  ↓
+                                       ↓                                       Interrupt (one-time) --> [TERMINATED]  
+                                Request failed
+```
+
+                                        
+
+### Diagram 2: Spot Request State Machine
+
+Here is a text-based representation of the state transition diagram.
+
+```
+                     +---------+
+Create request ----> |  (open) | -----------------> (failed)
+                     +---------+
+                         | |
+                         | +---------------------> (cancelled)
+                         |
+                         V
+      +----------------+
+      |    (active)    |
+      +----------------+
+      |       |        |
+      |       |        +-----------------------> (cancelled)
+      |       |
+ [one-time] [persistent]
+      |       |
+      V       V
+  (closed)  +------------+
+            | (disabled) |
+            +------------+
+              |      |
+              |      +-------------------------> (cancelled)
+              |
+              +----[persistent]---> (Back to open)
+```
+
+
+
+
+
+
+
+
 ### Detailed Purchasing Options
 
 #### On-Demand Instances
@@ -349,7 +536,7 @@ Each rule consists of:
 * **IMAPS (Port 993)** – IMAP over SSL/TLS
 * **POP3 (Port 110)** – Post Office Protocol version 3
 * **LDAP (Port 389)** – Lightweight Directory Access Protocol
-* **LDAPS (Port 636)** – LDAP over SSL/TLS
+* **LDAPS (Port 636)** – LDAP over SSL/TLSff
 * **MongoDB (Port 27017)** – MongoDB database connections
 * **Redis (Port 6379)** – Redis database connections
 
