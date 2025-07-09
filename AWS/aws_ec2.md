@@ -130,27 +130,134 @@ Instance sizes follow a pattern: `instance_family+genation.size`
 * **Development/Testing**: t3.micro, t3.small
 
 
-| Instance        | vCPU | Mem (GiB) | Storage             | Network Performance | EBS Bandwidth (Mbps) |
-| :-------------- | :--- | :-------- | :------------------ | :------------------ | :------------------- |
-| `t2.micro`      | 1    | 1         | EBS-Only            | Low to Moderate     | -                    |
-| `t2.xlarge`     | 4    | 16        | EBS-Only            | Moderate            | -                    |
-| `c5d.4xlarge`   | 16   | 32        | 1 x 400 NVMe SSD    | Up to 10 Gbps       | 4,750                |
-| `r5.16xlarge`   | 64   | 512       | EBS Only            | 20 Gbps             | 13,600               |
-| `m5.8xlarge`    | 32   | 128       | EBS Only            | 10 Gbps             | 6,800                |
+| Instance         | vCPU  | Mem (GiB)  | Storage              | Network Performance  | EBS Bandwidth (Mbps)  |
+|:-----------------|:------|:-----------|:---------------------|:---------------------|:----------------------|
+| `t2.micro`       | 1     | 1          | EBS-Only             | Low to Moderate      | -                     |
+| `t2.xlarge`      | 4     | 16         | EBS-Only             | Moderate             | -                     |
+| `c5d.4xlarge`    | 16    | 32         | 1 x 400 NVMe SSD     | Up to 10 Gbps        | 4,750                 |
+| `r5.16xlarge`    | 64    | 512        | EBS Only             | 20 Gbps              | 13,600                |
+| `m5.8xlarge`     | 32    | 128        | EBS Only             | 10 Gbps              | 6,800                 |
 
 https://instances.vantage.sh/
 
 
 ## Purchasing Options
 
-| Purchasing Option       | Best for                                                                               | Cost                                        | Commitment                    | Flexibility                   |
-|-------------------------|----------------------------------------------------------------------------------------|---------------------------------------------|-------------------------------|-------------------------------|
-| **On-Demand**           | Short-term, unpredictable workloads                                                    | High, predictable pricing -> pay by second  | None                          | High                          |
-| **Reserved Instances**  | Long-term, steady workloads (1-3 years)                                                | Medium to Low (Up to 75% off)               | 1 or 3 years                  | Low                           |
-| **Spot Instances**      | Fault-tolerant, flexible, batch jobs, big data, CI/CD, distributed computing           | Very Low (Up to 90% off)                    | None (subject to termination) | Medium (can be interrupted)   |
-| **Savings Plans**       | Consistent workloads but needing more flexibility than Reserved Instances              | Medium to Low (Up to 72% off)               | 1 or 3 years                  | High (more flexible than RI)  |
-| **Dedicated Hosts**     | Workloads requiring complete hardware control (compliance, software licensing)         | High                                        | 1 or 3 years                  | Medium                        |
-| **Dedicated Instances** | Workloads needing physical isolation without full control over the hardware            | High                                        | None                          | Medium                        |
+| Purchasing Option       | Best for                                                                                                                                   | Cost                                        | Commitment                    | Flexibility                   |
+|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------|-------------------------------|-------------------------------|
+| **On-Demand**           | Short-term workload, unpredictable workloads                                                                                               | High, predictable pricing -> pay by second  | None                          | High                          |
+| **Reserved Instances**  | Reserved instances, Long-term workload, steady workloads, convertible reserved instance -> long workloads with fixable instances           | Medium to Low (Up to 75% off)               | 1 or 3 years                  | Low                           |
+| **Spot Instances**      | Fault-tolerant, flexible, batch jobs, big data, CI/CD, distributed computing, short workloads, can lose instances(less reliable)           | Very Low (Up to 90% off)                    | None (subject to termination) | Medium (can be interrupted)   |
+| **Savings Plans**       | Consistent workloads but needing more flexibility than Reserved Instances, commitment to an amount of uses, long workload                  | Medium to Low (Up to 72% off)               | 1 or 3 years                  | High (more flexible than RI)  |
+| **Dedicated Hosts**     | Workloads requiring complete hardware control (compliance, software licensing), book an entire physical server, control instance placement | High                                        | 1 or 3 years                  | Medium                        |
+| **Dedicated Instances** | Workloads needing physical isolation without full control over the hardware, no other customers will share your hardware                   | High                                        | None                          | Medium                        |
+
+# Cloud Purchasing Options
+
+## On-Demand Instances
+*   **Best for:** Short-term, spiky, or unpredictable workloads where you can't forecast compute needs. Perfect for 
+    development, testing, and applications being launched for the first time.
+*   **Cost:** Highest, but with no upfront payment. You pay for what you use, typically by the second or hour, with 
+    predictable pricing.
+    * Linux or windows - billing per second, after first minute.
+    * All other os - billing per hour.
+*   **Commitment:** None. You can start, stop, or terminate instances at any time.
+*   **Flexibility:** High. Easily scale your resources up or down as your needs change.
+
+## Reserved Instances (RI)
+*   **Best for:** Steady-state(like database), predictable, or long-term workloads. Convertible RIs are available for 
+    long-term workloads where the instance type or family might need to change over time.
+*   **Cost:** Medium to Low. Offers a significant discount (up to 75% off) compared to On-Demand pricing in exchange for
+    a long-term commitment.
+*   **Commitment:** 1 or 3 years.
+*   **Flexibility:** Low. You are committed to specific instance families, OS, tenancy, regions, and terms, although 
+    Convertible RIs offer some flexibility to change instance attributes.
+*   **Scope**: Regional or Zonal(reserve capacity in an AZ).
+*   Can buy or sell(if not needed) Reserved Instances in the AWS Marketplace.
+
+### Convertable Reserved Instances
+* Can change instance attributes like instance type, OS, tenancy or OS.
+* Up to 66% discount.
+
+## Spot Instances
+*   **Best for:** Fault-tolerant, stateless, or flexible applications. Ideal for batch processing, data analysis, image
+    processing, CI/CD pipelines, distributed computing/workload, workload with a flexible start and end time and any 
+    workload that can withstand interruptions.
+    * Not suitable for critical applications that require high availability or low latency or databases.
+*   **Cost:** Very Low. The cheapest option, offering massive discounts (up to 90% off) by using a cloud provider's 
+    spare compute capacity.
+*   **Commitment:** None, but your instances can be terminated with a short (e.g., 2-minute) warning if the capacity is
+    needed back.
+*   **Flexibility:** Medium. You have flexibility in what you run, but you must be prepared for interruptions.
+
+## Savings Plans
+*   **Best for:** Consistent, long-term workloads where you need more flexibility than Reserved Instances. Instead of 
+    reserving a specific instance, you commit to a certain amount of compute usage (e.g., $10/hour).
+*   **Cost:** Medium to Low. Offers significant discounts (up to 72% off) similar to RIs.
+*   **Commitment:** 1 or 3 years.
+*   **Flexibility:** High. Much more flexible than RIs, as the discount automatically applies to any instance usage 
+    across different families and regions (depending on the plan type).
+    * Locked to a specific instance family and AWS region.
+    * Flexible across instance sizes(e.g. m5.xlarge, m5.2xlarge), operating systems(e.g. Linux, Windows), and tenancy(
+      host, dedicated, or shared).
+*   Usages beyond EC2 saving plans is billed at the on demand price. 
+
+## Dedicated Hosts
+*   **Best for:** Workloads with strict compliance requirements or complex software licensing models (Bring Your Own 
+    License - BYOL) that are tied to physical hardware, use your existing server-bound software licenses (per-socket, 
+    per-core, pe—VM software licenses). You get an entire physical server and have control over instance 
+    placement.
+*   **Cost:** High. Typically, the most expensive option as you are leasing an entire physical machine.
+*   **Commitment:** Can be purchased On-Demand, or with a 1 or 3-year reservation for savings.
+*   **Flexibility:** Medium. You control the hardware, but you are tied to that specific server.
+
+## Dedicated Instances
+*   **Best for:** Workloads that require physical isolation for security or compliance but do not require the full 
+    control (or cost) of a Dedicated Host. Your instances run on hardware dedicated to you, but you don't control the 
+    physical server itself. May share hardware with other instances in same account. No control over placement(can move
+    hardware after stop or start).
+*   **Cost:** High. More expensive than standard On-Demand instances because of the hardware isolation.
+*   **Commitment:** None. Billed on a standard, per-hour basis.
+*   **Flexibility:** Medium. You get instance isolation without being locked into a specific physical server.
+
+| Characteristic                                        | Dedicated Instances | Dedicated Hosts |
+|:------------------------------------------------------|:-------------------:|:---------------:|
+| Enables the use of dedicated physical servers         |          X          |        X        |
+| Per instance billing (subject to a $2 per region fee) |          X          |                 |
+| Per host billing                                      |                     |        X        |
+| Visibility of sockets, cores, host ID                 |                     |        X        |
+| Affinity between a host and instance                  |                     |        X        |
+| Targeted instance placement                           |                     |        X        |
+| Automatic instance placement                          |          X          |        X        |
+| Add capacity using an allocation request              |                     |        X        |
+
+## Capacity Reservations
+*   **Best for:** Mission-critical workloads where you must guarantee the ability to launch instances in a specific 
+    Availability Zone (AZ) for any duration. Ideal for disaster recovery or ensuring capacity for essential 
+    applications. Have always access to EC2 capacity when you need it.
+*   **Cost:** Billed at the standard On-Demand rate for the capacity you reserve, whether you use it or not. *Note: 
+    Discounts from existing Savings Plans or RIs can be applied to cover the cost.* no billing discount.
+*   **Commitment:** None. Can be created for any duration and cancelled at any time.
+*   **Flexibility:** Medium. While flexible, the reservation is very specific (locked to an instance type and AZ), 
+    ensuring you get exactly what you need.
+*   Combine with Regional Reserved Instances and Savings Plans to benefit from billing discounts
+*   You're charged at On-Demand rate whether you run instances or not
+*   Suitable for short-term, uninterrupted workloads that needs to be in a specific AZ
+
+
+## Price Comparison Example – m4.large – us-east-1
+
+| Price Type                             | Price (per hour)                           |
+|:---------------------------------------|:-------------------------------------------|
+| On-Demand                              | $0.10                                      |
+| Spot Instance (Spot Price)             | $0.038 - $0.039 (up to 61% off)            |
+| Reserved Instance (1 year)             | $0.062 (No Upfront) - $0.058 (All Upfront) |
+| Reserved Instance (3 years)            | $0.043 (No Upfront) - $0.037 (All Upfront) |
+| EC2 Savings Plan (1 year)              | $0.062 (No Upfront) - $0.058 (All Upfront) |
+| Reserved Convertible Instance (1 year) | $0.071 (No Upfront) - $0.066 (All Upfront) |
+| Dedicated Host                         | On-Demand Price                            |
+| Dedicated Host Reservation             | Up to 70% off                              |
+| Capacity Reservations                  | On-Demand Price                            |
 
 ### Detailed Purchasing Options
 
@@ -623,6 +730,35 @@ yum search package_name          # Search for packages
 - **AMI Creation**: Create AMIs for quick instance recovery
 - **Multi-AZ Deployment**: Deploy across multiple Availability Zones
 - **Disaster Recovery**: Plan and test disaster recovery procedures
+
+
+# AWS Charges for Public IPv4 Addresses
+
+## General Pricing Policy
+*   **Effective Date:** As of **February 1st, 2024**, AWS charges for all Public IPv4 addresses associated with your
+    account.
+*   **Cost:** The standard charge is **$0.005 per hour** for each Public IPv4 address, which equates to approximately 
+    **$3.6 per month**.
+
+## AWS Free Tier for EC2
+*   **Eligibility:** The Free Tier for Public IPv4 is available only to **new AWS accounts** for their first
+    **12 months**.
+*   **Allowance:** It includes **750 hours of Public IPv4 usage per month** specifically for **EC2 instances**. If you 
+    run one EC2 instance continuously for a month, its Public IP usage will be covered by the Free Tier.
+
+## Charges for Other Services (No Free Tier)
+*   There is **no free tier** for Public IPv4 addresses used by any service other than EC2.
+*   **Load Balancers:** Consume one Public IPv4 address per Availability Zone (AZ) they are active in. These are charged
+    at the standard rate with no free tier.
+*   **RDS Databases:** Publicly accessible RDS instances use one Public IPv4 address, which is charged at the standard 
+    rate with no free tier.
+
+Troubleshoot tips: https://repost.aws/articles/ARknH_OR0cTvqoTfJrVGaB8A/why-am-i-seeing-charges-for-public-ipv4-addresses-when-i-am-under-the-aws-free-tier
+
+Also using IPAM we will get all our public IPv4 addresses and their usage. IPAM is a service that helps you manage IP 
+addresses in your AWS environment, including tracking Public IPv4 addresses and their usage across different services 
+like EC2, RDS, and Load Balancers. It provides visibility into your IP address allocations and helps you optimize your 
+IP address usage.
 
 # Resources
 * [AWS in ONE VIDEO 🔥 For Beginners 2025 [HINDI] | MPrashant](https://www.youtube.com/watch?v=N4sJj-SxX00)
