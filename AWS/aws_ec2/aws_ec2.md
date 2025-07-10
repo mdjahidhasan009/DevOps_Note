@@ -606,7 +606,7 @@ Total target capacity, Instance requirements, Fleet strength, Estimated hourly p
 ## Reserving spot instances from EC2 instance launch wizard
 From EC2 > Instances > Launch Instance, now from "Launch an instance" page go down to "Advanced details" section and 
 from there at "Purchasing options" section we can select "Request Spot Instances" after that click on "Customize spot 
-intance options" text it will make available the options to customize the spot instance request.
+instance options" text it will make available the options to customize the spot instance request.
 
 #### Maximum price
 The maximum price you are willing to pay for the spot instance.
@@ -1363,10 +1363,104 @@ open with the following fields to fill out:
 
 After filling out the form, click on "Create group" button to create the placement group. 
 
-While launching an EC2 instance, you can select the placement group in the "Advanced details" section under "Placement group" option. This will ensure that the instance is launched in the specified placement group.
+While launching an EC2 instance, you can select the placement group in the "Advanced details" section under "Placement 
+group" option. This will ensure that the instance is launched in the specified placement group.
 
+
+
+# Elastic Network Interface(ENI)
+An Elastic Network Interface (ENI) is a virtual network interface that can be attached to an EC2 instance. It provides
+additional networking capabilities and allows you to manage network interfaces independently of the instances they are
+attached to. ENIs can be used to create a more flexible and scalable network architecture in AWS.
+
+* Logical component in a VPC that represents a virtual network interface.
+* The ENI can have the following attributes:
+  * Primary private IPv4, one or more secondary IPv4, and IPv6 addresses.
+  * One Elastic IP (IPv4) per private IPv4.
+  * One public IPv4 address.
+  * One or more security groups.
+  * A MAC address.
+* We can create ENI independently and attach them on the fly (move them) on EC2 instances of failover.
+* Bound to a specific Availability Zone.
+
+Suppose we have two EC2 instance and first one has a primary ENI and a secondary ENI and second one only has a primary
+ENI. Now we can attach the secondary ENI of the first instance to the second instance. This allows us to move
+network interfaces between instances without losing the associated IP addresses, security groups, and other attributes.
+
+Now go to EC2 > Instances, click on "Lunch instances" and create two instances. Now if we select any of the instance
+and goes to "Networking" tab, we will see the primary ENI for those instances. 
+
+Also, if we go to EC2 > Network & Security > Network Interfaces, we will see those two primary ENI there, those two also
+will have instance id. Now we will create a secondary ENI. Click on "Create network interface" button. A form will open
+enter a description and select the subnet(those subnet are lined to specific availability zone), select one in which
+the previous EC2 are created. Select a security group, and click on "Create network interface" button.
+
+Select newly created ENI and click on "Actions" > "Attach" > "Attach to an instance". A form will open, select the
+vpc and instance id and click on "Attach" button. Now if we go to the EC2 instance which we attached the
+secondary ENI, we will see the secondary ENI in the "Networking" tab. Now select the newly created ENI and click on
+"Actions" and then "Detach" to detach the ENI from the instance. After that, we can attach it to another instance
+by selecting the ENI and clicking on "Actions" > "Attach" > "Attach to an instance". This allows us to move the ENI
+between instances without losing the associated attributes like IP addresses and security groups.
+
+By doing this we can simulate network failover scenarios, where if the primary ENI of an instance fails, we can
+quickly attach a secondary ENI to another instance to maintain network connectivity. This is useful for high
+availability applications that require continuous network access.
+
+https://aws.amazon.com/blogs/aws/new-elastic-network-interfaces-in-the-virtual-private-cloud/
+
+# EC2 Hibernates
+Hibernation is a feature that allows you to pause an EC2 instance and save its in-memory state(data in ram) to the EBS 
+root volume. When you hibernate an instance, it saves the contents of the RAM to the EBS volume, allowing you to resume 
+the instance from where it left off without losing any data. This is useful for applications that require a quick 
+restart without the need to reboot the instance or reload the application state.
+
+*   We know we can stop, terminate instances
+    *   **Stop** – the data on disk (EBS) is kept intact in the next start
+    *   **Terminate** – any EBS volumes (root) also set-up to be destroyed is lost, as default this is check that delete
+        volume on termination of EC2, if we uncheck it while creating the instance then the EBS volume will not be 
+        deleted.
+
+*   On start, the following happens:
+    *   First start: the OS boots & the EC2 User Data script is run
+    *   Following starts: the OS boots up
+    *   Then your application starts, caches get warmed up, and that can take time!
+
+*   Introducing EC2 Hibernate:
+    *   The in-memory (RAM) state is preserved
+    *   The instance boot is much faster! (the OS is not stopped / restarted)
+    *   Under the hood: the RAM state is written to a file in the root EBS volume
+    *   The root EBS volume must be encrypted
+
+*   Use cases:
+    *   Long-running processing
+    *   Saving the RAM state
+    *   Services that take time to initialize
+
+*   Supported Instance Families – C3, C4, C5, I3, M3, M4, R3, R4, T2, T3, ...
+*   Instance RAM Size – must be less than 150 GB.
+*   Instance Size – not supported for bare metal instances.
+*   AMI – Amazon Linux 2, Linux AMI, Ubuntu, RHEL, CentOS & Windows...
+*   Root Volume – must be EBS, encrypted, not instance store, and large
+*   Available for On-Demand, Reserved and Spot Instances
+
+*   An instance can NOT be hibernated more than 60 days
+
+
+We can create an EC2 instance with hibernation enabled by going to EC2 > Instances, click on "Launch instances" keeping
+every default but in the "Advanced details" section, "Stop - Hibernate behavior" section select "Hibernate" option. After
+select enable we see this message below this option "To enable hibernation, space is allocated on the root volume to
+store the instance memory (RAM). Make sure that the root volume is large enough to store the RAM contents and 
+accommodate your expected usage, e.g. OS, applications. To use hibernation, the root volume must be an encrypted EBS 
+volume." So at "Configure storage" click on "Advance", at Encryption select Encrypted option and select the default KMS
+key from KMS key dropdown. After that click on "Launch instance" button to create the instance. And for t2.micro it has
+1GB of RAM and our default EBS 8 GB of ram so it will be enough for hibernation.
+
+To Test hibernation let connect using EC2 instance connect, and run the `uptime` it showing 3 minutes, and now hibernate
+the instance. And after sometime if we start the instance again, we will see that the uptime is still 3 minutes. As we
+simply hibernate this instance from OS point of view it does not stop or restart.
 
 # Resources
 * [AWS in ONE VIDEO 🔥 For Beginners 2025 [HINDI] | MPrashant](https://www.youtube.com/watch?v=N4sJj-SxX00)
 * [How do I utilize user data to automatically run a script with every restart of my Amazon EC2 Linux instance?](https://repost.aws/knowledge-center/execute-user-data-ec2)
 * [Amazon EC2 Instance types](https://aws.amazon.com/ec2/instance-types/)
+* [Ultimate AWS Certified Solutions Architect Associate 2025](https://www.udemy.com/course/aws-certified-solutions-architect-associate-saa-c03)
