@@ -602,7 +602,87 @@ Determines how Spot Fleet selects from available instance pools to fulfill your 
 There will be card saying "Your fleet request at a glance" where will a glance of my current fleet. With info like
 Total target capacity, Instance requirements, Fleet strength, Estimated hourly price
 
-### Detailed Purchasing Options
+
+## Reserving spot instances from EC2 instance launch wizard
+From EC2 > Instances > Launch Instance, now from "Launch an instance" page go down to "Advanced details" section and 
+from there at "Purchasing options" section we can select "Request Spot Instances" after that click on "Customize spot 
+intance options" text it will make available the options to customize the spot instance request.
+
+#### Maximum price
+The maximum price you are willing to pay for the spot instance.
+* No maximum price: The default behavior is to set the maximum price to the On-Demand price for the instance type.
+* Set maximum price: You can specify a maximum price per hour for the spot instance. If the spot price exceeds this 
+  amount, the instance will not be launched.
+#### Request type
+The type of spot request you want to create.  
+* One-time request: The spot request will be fulfilled once and then closed.
+* Persistent request: The spot request will remain open until you cancel it or the request expires. This is useful for 
+  workloads that require continuous capacity.
+#### Valid to
+* No expiration: The spot request will remain open indefinitely until you cancel it.
+* Specify expiration: You can set a specific date and time when the spot request will expire. After this time, the 
+  request will be closed, and no new instances will be launched.
+#### Interruption behavior
+* Terminate: The instance will be terminated when the spot price exceeds your maximum price or when AWS needs the 
+  capacity back.
+* Stop: The instance will be stopped when the spot price exceeds your maximum price or when AWS needs the capacity back.
+  You can later restart the instance, and it will retain its data.
+* Hibernate: The instance will be hibernated when the spot price exceeds your maximum price or when AWS needs the 
+  capacity back. This option is only available for certain instance types and requires EBS-backed instances. When you 
+  restart the instance, it will retain its data and state.
+
+# Reserved Instances
+EC2 > Instances > Reserved Instances, click on "Purchase Reserved Instances" button. Now a popup window will open with
+the title "Purchase Reserved Instances". There will be a form with the following fields to fill out:
+- **Platform:** Select the operating system for the reserved instance (e.g., Linux/UNIX, Windows).
+- **Tenancy:** Choose between shared(default) or dedicated tenancy.
+- **Offering class:** Select the type of reserved instance (e.g., Standard, Convertible).
+- **Instance type:** Select the instance type for which you want to purchase the reserved instance (e.g., t3.micro, 
+  m5.large).
+- **Term:** Choose the duration of the reservation (1 year or 3 years).  
+- **Payment option:** Select the payment option for the reserved instance:
+    - **All Upfront:** Pay the entire reservation cost upfront.
+    - **Partial Upfront:** Pay a portion upfront and the rest in monthly installments.
+    - **No Upfront:** No upfront payment, but you pay monthly for the reservation.
+
+After click on "Search" button, it will show the available reserved instances based on your selected options. You can
+select the desired reserved instance from the list and click on "Add to cart" button. After all desired reserved into 
+cart click on "View cart" button to review your selected reserved instances. Finally, click on "Purchase" button to
+complete the purchase of the reserved instances.
+
+# Saving Plans
+EC2 > Instances > Savings Plans, click on "Purchase Savings Plans" button. Now a page with "Overview" will appear then
+click on "Purchase Savings Plans" button. A form will open with the following fields to fill out:
+#### Plan type 
+Select the type of savings plan you want to purchase:
+- **Compute Savings Plans:** Flexible across instance families, sizes, OS, tenancy.
+- **EC2 Instance Savings Plans:** Lower prices for specific instance families in specific regions.
+- **SageMaker Savings Plans:** Flexible across SageMaker instance families, sizes, OS, tenancy.
+
+#### Purchange commitment
+- Hourly commitment: The amount you are willing to commit to spending per hour for the savings plan.
+- Payment option: Select the payment option for the savings plan:
+    - **All Upfront:** Pay the entire commitment amount upfront.
+    - **Partial Upfront:** Pay a portion upfront and the rest in monthly installments.
+    - **No Upfront:** No upfront payment, but you pay monthly for the savings plan.
+
+Then there will be start date which is optional and purchage summary after that we can purchase the savings plan.
+
+# Dedicated Host
+EC2 > Instances > Dedicated Hosts, click on "Allocate Dedicated Host" button. Now a form will open with the following
+fields to fill out:
+- **Instance family:** Select the instance family for which you want to allocate the dedicated host (e.g., m5, c5).
+- **Support multiple instance types:** Check this box if you want to support multiple instance types on the dedicated host.
+- **Instance type:** Select the specific instance type for which you want to allocate the dedicated host (e.g., m5.large, 
+  c5.xlarge).
+- **Availability Zone:** Select the Availability Zone where you want to allocate the dedicated host.
+- **Host recovery:** Check this box if you want to enable host recovery for the dedicated host. This will automatically 
+  recover the host in case of a failure.
+- **Host name:** Enter a name for the dedicated host. This is optional but can help you identify the host later.
+
+etc. After filling out the form, click on "Allocate" button to allocate the dedicated host. Once the host is allocated, you
+
+# Detailed Purchasing Options
 
 #### On-Demand Instances
 - Pay by the hour or second (Linux/Windows)
