@@ -1183,6 +1183,189 @@ addresses in your AWS environment, including tracking Public IPv4 addresses and 
 like EC2, RDS, and Load Balancers. It provides visibility into your IP address allocations and helps you optimize your 
 IP address usage.
 
+# Elastic IP Addresses
+An Elastic IP address is a static IPv4 address which will not change like public ip on EC2 changes every time you stop
+and start the instance. On AWS account you can have 5 Elastic IP addresses by default. If you want more than 5 then
+you can request a limit increase through the AWS Support Center.
+
+We can get a elastic IP address from EC2 > Network & Security > Elastic IPs, then click on "Allocate Elastic IP address"
+button. A page "Allocate Elastic IP address" will open
+
+#### Public IPv4 address pool
+- **Amazon's pool of IPv4 addresses**: This option allocates an Elastic IP address from Amazon's pool of public IPv4 
+  addresses.
+
+#### Network border group
+Select the network border group for the Elastic IP address. This determines the AWS region and Availability Zone 
+where the Elastic IP address will be allocated. The default is "us-east-1".
+
+Click on "Allocate" button to allocate the Elastic IP address. After allocation, you will see the new Elastic IP
+address in the list of Elastic IPs. You can then associate this Elastic IP address with an EC2 instance or a network 
+interface.
+
+Select your Elastic IP address and click on "Actions" > "Associate Elastic IP address". A page "Associate Elastic IP address"
+will open with the following fields to fill out:
+#### Resource type
+* **Instance**: Associate the Elastic IP address with an EC2 instance.
+* **Network interface**: Associate the Elastic IP address with a network interface.
+
+#### Private IP address
+- **Private IP address**: If the instance has multiple private IP addresses, select the specific private IP address
+  to associate with the Elastic IP address. If the instance has only one private IP address, this field will be
+  automatically populated.
+
+### Reassociation
+- **Allow reassociation**: Check this box if you want to allow the Elastic IP address to be reassociated with another
+  instance or network interface in the future. If this option is not checked, the Elastic IP address can only be
+  associated with the current instance or network interface.  
+
+Click on "Associate" button to associate the Elastic IP address with the selected instance or network interface. After
+the association is successful, the Elastic IP address will be displayed in the list of Elastic IPs, and it will be
+associated with the specified instance or network interface.  
+
+
+# Placement Groups
+Placement groups are a way to control the placement of EC2 instances within an Availability Zone. They allow you to
+group instances together to achieve specific performance characteristics, such as low latency or high throughput.
+Placement groups are useful for applications that require high network performance, such as HPC (High Performance
+Computing) applications, distributed databases, and real-time data processing.
+
+## Types of Placement Groups
+### Cluster Placement Group
+- **Purpose**: Group instances in a single Availability Zone for low latency and high throughput.
+- **Use Case**: HPC applications, distributed databases, and applications that require high network performance and low
+  latency, big data job.
+- **Characteristics**:
+    - Instances are placed close together in the same rack.
+    - Provides the lowest network latency and highest network throughput. Like 10 Gbps network performance with enhanced 
+      networking.
+    - Ideal for applications that require high inter-instance communication.
+- **Limitations**: Limited to a single Availability Zone, and the number of instances that can be launched in a cluster 
+  placement group is limited by the instance type and size. Has high risk as if the AZ goes down, all instances in the
+  placement group will be affected.
+
+```shell
++-----------------------------------------------------------+
+|                                                           |
+|  Same AZ                                                  |
+|                                                           |
+|           +-------+  +-------+  +-------+                 |
+|           |  EC2  |--|  EC2  |--|  EC2  |                 |
+|           +-------+  +-------+  +-------+                 |
+|             |      \  /  |   \  /      |                  |
+|             |       \/   |    \/       |                  |
+|             |       /\   |    /\       |                  |
+|             |      /  \  |   /  \      |                  |
+|           +-------+  +-------+  +-------+                 |
+|           |  EC2  |--|  EC2  |--|  EC2  |                 |
+|           +-------+  +-------+  +-------+                 |
+|                                                           |
++-----------------------------------------------------------+ <------ Placement group
+                                                                        Cluster
+                                                                        Low latency
+                                                                        10 Gbps network
+```
+
+### Spread Placement Group
+- **Purpose**: Distribute instances across underlying hardware in different azs and can be multiple instances in a 
+  single az, to reduce the risk of simultaneous failures. One partition in one AZ can have multiple instances.
+- **Use Case**: Applications that require high availability and fault tolerance, such as web servers, microservices, and 
+  distributed applications for critical workloads which can afford downtime. Critical applications where each instance
+  must be isolated from failure from each other.
+- **Characteristics**:
+    - Instances are placed on different physical hardware.
+    - Provides high availability and fault tolerance.
+    - Reduces risk of simultaneous failures by spreading instances across multiple hardware.
+    - Ideal for applications that can tolerate some downtime but require high availability.
+- **Limitations**: Limited to a maximum of 7 running instances per Availability Zone, and the number of instances that
+  can be launched in a spread placement group is limited by the instance type and size. Has low risk as if one instance 
+  goes down, the others will still be available.
+
+```shell
++----------------+      +----------------+      +----------------+
+|   Us-east-1a   |      |   Us-east-1b   |      |   Us-east-1c   |
+|                |      |                |      |                |
+| +------------+ |      | +------------+ |      | +------------+ |
+| | +--------+ | |      | | +--------+ | |      | | +--------+ | |
+| | |  EC2   | | |      | | |  EC2   | | |      | | |  EC2   | | |
+| | +--------+ | |      | | +--------+ | |      | | +--------+ | |
+| | Hardware 1 | |      | | Hardware 3 | |      | | Hardware 5 | |
+| +------------+ |      | +------------+ |      | +------------+ |
+|                |      |                |      |                |
+| +------------+ |      | +------------+ |      | +------------+ |
+| | +--------+ | |      | | +--------+ | |      | | +--------+ | |
+| | |  EC2   | | |      | | |  EC2   | | |      | | |  EC2   | | |
+| | +--------+ | |      | | +--------+ | |      | | +--------+ | |
+| | Hardware 2 | |      | | Hardware 4 | |      | | Hardware 6 | |
+| +------------+ |      | +------------+ |      | +------------+ |
++----------------+      +----------------+      +----------------+
+```
+
+### Partition Placement Group
+- **Purpose**: Divide instances into partitions(which rely on different set of racks) to reduce the risk of simultaneous 
+  failures while allowing for high availability and fault tolerance. Means at one spread all instancees are not isolated
+  from each other, means if if have problem in a partition then it will affect all instances in that partition but other
+  partitions will still be available and there instance in that partition will not be affected.
+- **Use Case**: Applications that require high availability and fault tolerance, such as distributed databases,
+  big data processing, and applications that can tolerate some downtime. HDFS, HBase, Cassandra, Kafka, etc. are some
+  examples of applications that can benefit from partition placement groups.
+- **Characteristics**:
+    - Instances are placed in partitions, each with its own set of hardware.
+    - Provides high availability and fault tolerance.
+    - The instances in a partition do not share racks(hardware) with instances in other partitions.
+    - A partition failure can affect many instances, but other partitions and their instances will still be available.
+    - EC2 instances get access to the partition information as metadata.
+- **Limitations**: Scale to 100s of EC2 instances per group(Hadoop, Cassandra, Kafka, etc.) and the number of instances 
+  that can be launched in a partition placement group is limited by the instance type and size. Has low risk as if one partition goes down, the others will still be available. We can have 7 partitions per AZ and each partition can have
+  multiple instances. Each partition is isolated from each other, so if one partition goes down, the others will still be
+  available. This is useful for applications that require high availability and fault tolerance, such as distributed
+  databases, big data processing, and applications that can tolerate some downtime.
+
+```shell
++-----------------------------------+      +------------------+
+|          us-east-1a               |      |    us-east-1b    |
+|                                   |      |                  |
+|  +-------------+ +-------------+  |      | +-------------+  |
+|  |   +-------+ | |   +-------+ |  |      | |  +-------+  |  |
+|  |   |  EC2  | | |   |  EC2  | |  |      | |  |  EC2  |  |  |
+|  |   +-------+ | |   +-------+ |  |      | |  +-------+  |  |
+|  |   +-------+ | |   +-------+ |  |      | |  +-------+  |  |
+|  |   |  EC2  | | |   |  EC2  | |  |      | |  |  EC2  |  |  |
+|  |   +-------+ | |   +-------+ |  |      | |  +-------+  |  |
+|  |   +-------+ | |   +-------+ |  |      | |  +-------+  |  |
+|  |   |  EC2  | | |   |  EC2  | |  |      | |  |  EC2  |  |  |
+|  |   +-------+ | |   +-------+ |  |      | |  +-------+  |  |
+|  |   +-------+ | |   +-------+ |  |      | |  +-------+  |  |
+|  |   |  EC2  | | |   |  EC2  | |  |      | |  |  EC2  |  |  |
+|  |   +-------+ | |   +-------+ |  |      | |  +-------+  |  |
+|  | Partition 1 | | Partition 2 |  |      | | Partition 3 |  |
+|  +-------------+ +-------------+  |      | +-------------+  |
+|                                   |      |                  |
++-----------------------------------+      +------------------+
+```
+
+**Each pertition represent as a separate rack in AWS.**
+
+## Creating and using Placement Groups
+To create a placement group, go to EC2 > Placement Groups, and click on "Create placement group" button. A form will
+open with the following fields to fill out:
+- **Name**: Enter a name for the placement group.
+- **Strategy**: Select the placement group strategy:
+    - **Cluster**: For low latency and high throughput.
+    - **Spread**: For high availability and fault tolerance.
+      - **Spread level**: Select the spread level, Determines how placement groups spread instances. You can only use 
+        host level spread placement groups on Outposts.
+        - ** Rack(no restriction)**: Spread instances across racks in the same AZ.
+        - **Host**: Spread instances across hosts in the same AZ.
+    - **Partition**: For high availability and fault tolerance with partitions.
+      - **Number of partitions** Can be set 1 to 7, which determines how many partitions will be created in the
+        placement group. Each partition can have multiple instances. 
+
+After filling out the form, click on "Create group" button to create the placement group. 
+
+While launching an EC2 instance, you can select the placement group in the "Advanced details" section under "Placement group" option. This will ensure that the instance is launched in the specified placement group.
+
+
 # Resources
 * [AWS in ONE VIDEO 🔥 For Beginners 2025 [HINDI] | MPrashant](https://www.youtube.com/watch?v=N4sJj-SxX00)
 * [How do I utilize user data to automatically run a script with every restart of my Amazon EC2 Linux instance?](https://repost.aws/knowledge-center/execute-user-data-ec2)
