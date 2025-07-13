@@ -6,6 +6,9 @@
 
 * Vertical Scalability means adding more power (CPU, RAM) to your existing server.
 * Ex: `t2.micro` to `m5.large`
+* More common for non-distributed systems, such as databases(RDS), ElastiCahe or applications that require more 
+* resources to handle increased load.
+
 
 #### Vertical Scaling Characteristics
 - **Single Instance**: Increase capacity of existing instance
@@ -33,7 +36,7 @@ aws ec2 start-instances --instance-ids i-1234567890abcdef0
 - **Cost Inefficiency**: May pay for unused capacity
 - **Downtime Required**: Instance must be stopped for scaling
 
-### Horizontal Scalability (Scaling Out)
+### Horizontal Scalability (Scaling Out or elastic)
 
 * Horizontal Scalability means adding more instances (servers) to distribute the load.
 * You can add more EC2 instances behind a load balancer.
@@ -111,7 +114,7 @@ aws ec2 start-instances --instance-ids i-1234567890abcdef0
 - **Example**: Scalability is having the ability to add servers; Elasticity is automatically adding servers when CPU >
   80%
 
-## Elastic Load Balancer (ELB)
+# Elastic Load Balancer (ELB)
 
 * **Distributes Traffic:** It splits incoming traffic across multiple servers so no single server gets overloaded.
 * **Improves Availability:** If one server goes down, the load balancer automatically sends traffic to the working
@@ -135,9 +138,93 @@ aws ec2 start-instances --instance-ids i-1234567890abcdef0
 - **IP Hash**: Route based on client IP hash
 - **Sticky Sessions**: Route user to same instance
 
-## AWS Load Balancer Types
+### Use of load balancer
+* Spread load across multiple downstream instances
+* Expose a single point of access (DNS) to your application
+* Seamlessly handle failures of downstream instances
+* Do regular health checks to your instances
+* Provide SSL termination (HTTPS) for your websites
+* Enforce stickiness with cookies
+* High availability across zones
+* Separate public traffic from private traffic
 
-AWS offers different types of load balancers depending on your needs.
+### Why use an Elastic Load Balancer?
+
+*   An Elastic Load Balancer is a **managed load balancer**
+*   AWS guarantees that it will be working
+*   AWS takes care of upgrades, maintenance, high availability
+*   AWS provides only a few configuration knobs
+*   It costs less to setup your own load balancer but it will be a lot more effort on your end
+*   It is integrated with many AWS offerings / services
+*   EC2, EC2 Auto Scaling Groups, Amazon ECS
+*   AWS Certificate Manager (ACM), CloudWatch
+*   Route 53, AWS WAF, AWS Global Accelerator
+
+#### Health Checks
+
+*   Health Checks are crucial for Load Balancers
+*   They enable the load balancer to know if instances it forwards traffic to are available to reply to requests
+*   The health check is done on a port and a route (/health is common)
+
+An **Elastic Load Balancer** sends **Health Checks** to an **EC2 Instance**.
+
+*   **Protocol:** HTTP
+*   **Port:** 4567
+*   **Endpoint:** /health
+
+### Types of load balancer on AWS
+
+*   AWS has **4 kinds of managed Load Balancers**
+*   **Classic Load Balancer** (v1 - old generation) – 2009 – CLB **SHOULD NOT USE AND AWS WILL REMOVE THIS SOON**
+*   HTTP, HTTPS, TCP, SSL (secure TCP)
+*   **Application Load Balancer** (v2 - new generation) – 2016 – ALB
+*   HTTP, HTTPS, WebSocket
+*   **Network Load Balancer** (v2 - new generation) – 2017 – NLB
+*   TCP, TLS (secure TCP), UDP
+*   **Gateway Load Balancer** – 2020 – GWLB
+*   Operates at layer 3 (Network layer) – IP Protocol
+*   Overall, it is recommended to use the newer generation load balancers as they provide more features
+*   Some load balancers can be setup as **internal** (private) or **external** (public) ELBs
+
+### Load Balancer Security Groups
+
+This setup ensures that users can access the load balancer, but only the load balancer can send traffic to the EC2 instances, enhancing security.
+
+**Traffic Flow:**
+**Users** -> (HTTPS/HTTP from anywhere) -> **Load Balancer** -> (HTTP Restricted to Load Balancer) -> **EC2**
+
+
+
+### Load Balancer Security Group:
+
+| Type   | Protocol  | Port Range  | Source       | Description               |
+|:-------|:----------|:------------|:-------------|:--------------------------|
+| HTTP   | TCP       | 80          | 0.0.0.0/0    | Allow HTTP from anywhere  |
+| HTTPS  | TCP       | 443         | 0.0.0.0/0    | Allow HTTPS from anywhere |
+
+### Application Security Group: Allow traffic only from Load Balancer
+At EC2 only allow traffic from the Load Balancer security group to the EC2 instances using security group rules.
+
+| Type  | Protocol  | Port Range  | Source                           | Description                                 |
+|:------|:----------|:------------|:---------------------------------|:--------------------------------------------|
+| HTTP  | TCP       | 80          | sg-054b5ff5ea02f2b6e (load-b...) | Allow Traffic only from Load Balancer SG    |
+
+
+## Target Groups
+Target groups are used to route requests to one or more registered targets, such as EC2 instances, containers, or IP
+addresses. They define how requests are routed and monitored.
+
+Target group can be
+* EC2 instances(can be managed by Auto Scaling Group) - HTTP
+* ECS task(manage by ECS itself) - HTTP
+* Lambda functions - HTTP request is transferred into a JSON event
+* IP address - must be private IPs
+
+Health checks are at the target group level.
+
+### AWS Load Balancer Types
+
+AWS offers different types of elastic load balancers depending on your needs.
 
 * **Application Load Balancer (ALB)** is perfect for web applications, handling complex HTTP and HTTPS requests (Layer
   7).
@@ -149,12 +236,22 @@ AWS offers different types of load balancers depending on your needs.
 ### Application Load Balancer (ALB)
 #### Features
 - **Layer 7 (Application Layer)**: HTTP/HTTPS traffic
-- **Content-Based Routing**: Route based on URL, headers, query strings
-- **Host-Based Routing**: Route based on hostname
-- **Path-Based Routing**: Route based on URL path
+- **Content-Based Routing**: Route based on URL, headers, query strings(like example.com/users?id=123&order=false)
+- **Host-Based Routing**: Route based on hostname(one.example.com, two.example.com)
+- **Path-Based Routing**: Route based on URL path(example.com/api/*, example.com/images/*)
 - **WebSocket Support**: Real-time communication
 - **HTTP/2 Support**: Modern HTTP protocol
 - **SSL/TLS Termination**: Certificate management
+- Load balancing to multiple HTTP application across machines(target groups)
+- Load balancing to multiple application on the same machine(ex: containers, ECS)
+- Supports redirects (for example, HTTP to HTTPS) and fixed responses (for example, 404 Not Found)
+- ALB are great fit for microservices and container-based applications (ex docker and AWS ECS)
+- Has a port mapping feature to redirect traffic to a dynamic port in ECS.
+- The application servers don't see the IP of the client, they see the IP of the load balancer.
+  - The true IP of the client is inserted in the header `X-Forwarded-For`, which can be used by the application server 
+    to log the true client IP.
+  - We can also get port `X-Forwarded-Port` and protocol `X-Forwarded-Proto` in the header.
+
 
 #### ALB Components
 - **Load Balancer**: The main load balancer resource
@@ -305,7 +402,9 @@ AWS ASG (Auto Scaling Group) is a service that automatically adds or removes EC2
 your application is always available.
 
 It helps scale up when more capacity is needed and scale down during low usage to save costs, keeping the right number
-of servers running at all times.
+of servers running at all times. It's managed by AWS.
+
+An Auto Scaling Group is a component of the EC2 service.
 
 ### Auto Scaling Concepts
 - **Desired Capacity**: Target number of instances
@@ -471,8 +570,12 @@ Scale In Policy:
 - **CloudTrail Logs**: Track API calls and changes
 - **Cost Monitoring**: Monitor scaling costs
 
-## Practical Example: Complete Setup
 
+
+
+# Practical Example: Complete Setup
+
+## Example 1
 ### User Data Scripts
 
 #### Amazon Linux Script
@@ -572,7 +675,118 @@ hostname.
 Now we have two instance(after deleting the manually created instances) running in the Auto Scaling Group, if we terminate
 one of them, then the Auto Scaling Group will automatically launch a new instance to maintain the desired capacity of 2.
 
-### Advanced Configurations
+## Example 2
+Will lunch two EC2 instance(from EC2 > Instances) with AMI Amazon Linux, select key, at network select an security group
+with SSH port 22, and HTTP port 80 from anywhere, with public ip, at advanced details paste the following at "User data" 
+section.
+```bash
+#!/bin/bash
+# Use this for your user data (script from top to bottom)
+# install httpd (Linux 2 version)
+yum update -y
+yum install -y httpd
+systemctl start httpd
+systemctl enable httpd
+echo "<h1>Hello World from $(hostname -f)</h1>" > /var/www/html/index.html
+```
+Now if we visit those two EC2 instance public IP addresses using HTTP, we will see the message "Hello World from
+<hostname>!" for both instances.
+
+From EC2 > Load Balancers, click on "Create Load Balancer", select "Application Load Balancer", give a name like
+`mywebserver-lb`
+
+At "Scheme" we have two option > select "Internet-facing"
+* Internet Facing
+  * Serves internet-facing traffic.
+  * Has public IP addresses.
+  * DNS name resolves to public IPs.
+  * Requires a public subnet.
+* Internal
+  * Serves internal traffic.
+  * Has private IP addresses.
+  * DNS name resolves to private IPs.
+  * Compatible with the IPv4 and Dualstack IP address types.
+
+At "Load balancer IP address type" select "IPv4"
+* IPv4
+  * Uses IPv4 addresses.
+  * Compatible with most clients.
+  * Default option for ALB and NLB.
+* Dualstack
+  * Includes IPv4 and IPv6 addresses.
+* Dualstack without public IPv4
+  * Includes a public IPv6 address, and private IPv4 and IPv6 addresses. Compatible with internet-facing load balancers
+    only.
+  * **This will not show if select Internal**. And will show this message if select Internal "Your selection has been 
+    reset to IPv4. The previously selected Dualstack without public IPv4 IP address type is not available for Internal
+    load balancers."
+
+At "Network mapping" at vpc keep default selected one, and select all AZs at mapping and keep default subnets for those
+az.
+
+And for security selected mine already created sg with HTTP at port 80 from anywhere. And remove the default SG.
+
+At Listeners and routing, for port 80 we need to create a target group for routing request. So click on "Create target
+group" text there. It wil redirect us to EC2 > Target Groups > Create target group section. From that page Basic 
+configuration > Choose a target type > select instances
+* Instances
+  * Supports load balancing to instances within a specific VPC.
+  * Facilitates the use of Amazon EC2 Auto Scaling  to manage and scale your EC2 capacity.
+* IP addresses
+  * Supports load balancing to VPC and on-premises resources.
+  * Facilitates routing to multiple IP addresses and network interfaces on the same instance.
+  * Offers flexibility with microservice based architectures, simplifying inter-application communication.
+  * Supports IPv6 targets, enabling end-to-end IPv6 communication, and IPv4-to-IPv6 NAT.
+* Lambda function
+  * Facilitates routing to a single Lambda function.
+  * Accessible to Application Load Balancers only.
+* Application Load Balancer
+  * Offers the flexibility for a Network Load Balancer to accept and route TCP requests within a specific VPC.
+  * Facilitates using static IP addresses and PrivateLink with an Application Load Balancer.
+
+At "Target group name" write "demo-tg-alb", protocol keep "HTTP", Port 80, IP address type keep IPv4, VPC keep
+autoselected one and protocol version keep HTTP1.
+
+At "Health checks" keep health check protocol as HTTP, Health check path as default '/'.
+
+Now click on "Next" button. Now at second step select our previously created EC2 instances keep 80 for "Ports for 
+selected instances" and click on "Include as pending below" then click on "Create target group" button.
+
+
+Now go back to our "Create Application Load Balancer" page and at "Network and routing" default action section select 
+our newly create target group "demo-tg-alb" and click on "Create load balancer" button.
+
+Now after ALB's status goes Active from Provisioning we can visit the DNS provided by load balancer and will see our 
+site, and it will change its hostname as it alternatively sending traffic at those two EC2. If we stop any one EC2 then
+will see only one hostname after 30 sec.
+
+But till now have a security problem if we paste public ip's of our EC2 in browser then we will be able to see our 
+application, but we should stop that. So we will create a security group only for load balancer and at EC2's sg will 
+edit HTTP, port 80 inbound role will select source type custom and at source will select the security group of load
+balancer's so only from load balancer our EC2 instance will be available for HTTP at port 80.
+
+At the load balancer we can add custom rules for inbound like for certain path or hostname, like if we want to
+redirect traffic to a different target group for a specific path or hostname, or send fixed response for a specific path.
+
+EC2 > Load Balancers > select our 'mywebserver-lb' > "Listeners and rules" tab > click on "HTTP:80" > from Rules tab
+click on "Add rule". Click on "Add condition" form "Conditions" card and select path and enter `/error` as path.
+* **Host header**: Route based on hostname (e.g., example.com)
+* **Path**: Route based on URL path (e.g., /api/*)
+* **Query string**: Route based on query parameters (e.g., ?id=123)
+* **HTTP request method**: Route based on HTTP method (e.g., GET, POST)
+* **HTTP header**: Route based on specific HTTP headers (e.g., User-Agent)
+* **Source IP**: 
+
+Now from Actions card select > Return fixed response
+* **Forward to target group**: Route to a specific target group
+* **Redirect to URL**: Redirect to a different URL
+* **Return fixed response**: Send a static response (e.g., 404 Not Found)
+
+And response code 404, response body as "Not Found", content type as "text/plain" and click on "Next" button. And give
+priority as 1(lower is most powerful), and click on "Next" button. Now will show us preview so click on "Create" button.
+Now if we visit the load balancer DNS with path `/error`, we will see "Not Found" message, but if we visit the
+
+# Advanced Configurations
 
 #### Multi-Instance Type ASG
 ```json
@@ -673,3 +887,4 @@ aws autoscaling describe-auto-scaling-instances
 
 # Resources
 * [AWS in ONE VIDEO 🔥 For Beginners 2025 [HINDI] | MPrashant](https://www.youtube.com/watch?v=N4sJj-SxX00)
+* [Ultimate AWS Certified Solutions Architect Associate 2025](https://www.udemy.com/course/aws-certified-solutions-architect-associate-saa-c03)

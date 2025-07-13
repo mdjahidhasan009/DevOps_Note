@@ -6,6 +6,8 @@ It includes:
 * Operating system (e.g., Linux, Windows)
 * Application server (e.g., Apache, Nginx)
 * Pre-installed software and configurations
+  * Faster boot / configuration time because all software are pre-packed.
+* AMI are built for specific region(but can be copied across regions)
 
 With an AMI, you can launch new EC2 instances with a consistent, predefined configuration.
 
@@ -14,8 +16,9 @@ environments.
 
 ## What is an Amazon Machine Image (AMI)?
 An AMI is essentially a blueprint or template that contains all the information needed to launch an EC2 instance. Think 
-of it as a snapshot of a complete computer system that includes the operating system, applications, configurations, and
-even data. When you launch an EC2 instance, you're essentially creating a virtual machine based on this blueprint.
+of it as a snapshot of a complete computer system that includes the **operating system**, **applications**, 
+**configurations**, and **even data**. When you launch an EC2 instance, you're essentially creating a virtual machine 
+based on this blueprint.
 
 ## Key Components of an AMI
 - **Root Volume Snapshot**: Contains the operating system and boot information
@@ -209,7 +212,7 @@ sudo rm -rf /var/lib/cloud/data/*
 echo "Cleanup completed. Instance is ready for AMI creation."
 ```
 
-### Creating template from instance
+## Creating template from instance
 From EC2 > Instance, select the instance, click on "Actions" > Image and templates > Create template from instance. We
 can give name like "WebServerTemplate-v1" and description like "Template for web server with Nginx and Node.js". Now we
 will get this template at EC2 > Instances > Launch Templates. This template can be used to launch new instances with the
@@ -522,3 +525,4 @@ WebApp-Production-v2.1
 
 # Resources
 * [AWS in ONE VIDEO 🔥 For Beginners 2025 [HINDI] | MPrashant](https://www.youtube.com/watch?v=N4sJj-SxX00)
+* [Ultimate AWS Certified Solutions Architect Associate 2025](https://www.udemy.com/course/aws-certified-solutions-architect-associate-saa-c03)

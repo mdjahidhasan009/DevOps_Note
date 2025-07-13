@@ -37,8 +37,12 @@ data, operating systems, and applications.
   * No need to restart the EC2 instance during the process.
 
 ## EBS Volume Types
+EBS volumes are characterized in size or throughput or IOPS (I/O Ops Per Sec). **Only gp2/gp3 and io/io2 Block Express 
+can be used as boot volumes.**
 
 ### General Purpose SSD (gp3/gp2)
+General purpose SSD volume that balances price and performance for a wide variety of workload.
+
 - **gp3 (Latest Generation)**:
   - Base performance: 3,000 IOPS and 125 MiB/s throughput
   - Can provision up to 16,000 IOPS and 1,000 MiB/s throughput independently
@@ -46,34 +50,68 @@ data, operating systems, and applications.
   - Size range: 1 GiB to 16 TiB
 - **gp2 (Previous Generation)**:
   - Performance scales with volume size (3 IOPS per GiB)
+    - 3 IOPS per GB, means at 5334 GB we are at the max IOPS
   - Baseline performance: 100-16,000 IOPS
   - Burst performance up to 3,000 IOPS for smaller volumes
   - Size range: 1 GiB to 16 TiB
 
 ### Provisioned IOPS SSD (io2/io1)
+Highest-performance SSD volume for mission-critical low-latency or high-throughput workload with sustained IOPS 
+performance. Also designed for I/O-intensive applications such as large relational or NoSQL databases, and workloads
+that require more than 16,000 IOPS or 1,000 MiB/s throughput.
+
+Application that needs more than 16,000 IOPS or 1,000 MiB/s throughput should use io2 Block Express volumes.
+
+Supports EBS Multi-Attach feature, allowing a single io2 volume to be attached to multiple EC2 instances in the same
+Availability Zone, providing high availability and fault tolerance for applications that require shared access to the 
+same data.
+
 - **io2 (Latest Generation)**:
   - Up to 64,000 IOPS and 1,000 MiB/s throughput
   - 99.999% durability (higher than io1)
   - Sub-millisecond latency
   - Size range: 4 GiB to 16 TiB
+- **io2 Block Express**:
+  - Up to 256,000 IOPS and 4,000 MiB/s throughput
+  - 99.999% durability
+  - Size range: 4 GiB to 64 TiB
+  - Uses a next-generation architecture for higher scalability and performance.
+  - Designed for the most demanding workloads, such as large-scale databases and high-performance applications
 - **io1 (Previous Generation)**:
-  - Up to 64,000 IOPS and 1,000 MiB/s throughput
+  - Up to 64,000 IOPS for Nitro SSD instances and 32,000 IOPS others
+  - Up to 1,000 MiB/s throughput
   - 99.999% durability
   - Size range: 4 GiB to 16 TiB
+  - Can be increase PIOPS independently of volume size
 
-### Throughput Optimized HDD (st1)
+
+#### EBS Multi-Attach - io1 / io2 family
+
+- Attach the same EBS volume to multiple EC2 instances in the same AZ.
+- Each instance has full read & write permissions to the high-performance volume.
+- **Use case:**
+  - Achieve higher application availability in clustered Linux applications (ex: Teradata).
+  - Applications must manage concurrent write operations.
+- **Up to **16 EC2 Instances** at a time.** **//
+- Must use a file system that's **cluster-aware** (not standard file systems like XFS, EXT4, etc.).
+
+### Hard Disk Drive (HDD) Volumes
+
+#### Throughput Optimized HDD (st1)
+Low cost HDD volume designed for frequently accessed, throughput-intensive workloads. **Cannot be used as boot volume**
+
 - **Use Cases**: Big data, data warehouses, log processing
-- **Performance**: Up to 500 MiB/s throughput
+- **Performance**: Up to 500 MiB/s throughput, max IOPS 500
 - **Size Range**: 125 GiB to 16 TiB
 - **Cost**: Lower cost per GB than SSD
-- **Cannot be used as boot volume**
 
-### Cold HDD (sc1)
+#### Cold HDD (sc1)
+Lowest cost HDD volume designed for less frequency accessed workloads. Mainly for archiving data.
+
 - **Use Cases**: Less frequently accessed workloads
-- **Performance**: Up to 250 MiB/s throughput
+- **Performance**: Up to 250 MiB/s throughput, max IOPS 250
 - **Size Range**: 125 GiB to 16 TiB
 - **Cost**: Lowest cost per GB
-- **Cannot be used as boot volume**
 
 ### Volume Type Comparison
 
@@ -85,6 +123,48 @@ data, operating systems, and applications.
 | io1          | High IOPS            | 100-64,000   | 125-1,000 MiB/s | 4 GiB-16 TiB   | Yes          |
 | st1          | Throughput optimized | 500          | 40-500 MiB/s    | 125 GiB-16 TiB | No           |
 | sc1          | Cold storage         | 250          | 12-250 MiB/s    | 125 GiB-16 TiB | No           |
+
+
+Of course. The original table had issues with column alignment and the way it tried to merge headers, which isn't standard in Markdown.
+
+Here is a corrected and much cleaner version using two separate tables to properly represent the grouped data. This format is easy to read and copy directly into a Markdown file.
+
+---
+
+### Solid state drive (SSD) volumes
+
+SSD-backed volumes are optimized for transactional workloads involving frequent read/write operations with small I/O size, where the dominant performance attribute is IOPS.
+
+#### Amazon EBS General Purpose SSD volumes
+
+| Attribute             | gp3                                                                                                                                                                                             | gp2                                                                                                                                                                                             |
+|:----------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Durability**        | 99.8% - 99.9% durability (0.1% - 0.2% annual failure rate)                                                                                                                                      | 99.8% - 99.9% durability (0.1% - 0.2% annual failure rate)                                                                                                                                      |
+| **Use cases**         | - Transactional workloads<br>- Virtual desktops<br>- Medium-sized, single-instance databases<br>- Low-latency interactive applications<br>- Boot volumes<br>- Development and test environments | - Transactional workloads<br>- Virtual desktops<br>- Medium-sized, single-instance databases<br>- Low-latency interactive applications<br>- Boot volumes<br>- Development and test environments |
+| **Volume size**       | 1 GiB - 16 TiB                                                                                                                                                                                  | 1 GiB - 16 TiB                                                                                                                                                                                  |
+| **Max IOPS**          | 16,000 (64 KiB I/O)                                                                                                                                                                             | 16,000 (16 KiB I/O)                                                                                                                                                                             |
+| **Max throughput**    | 1,000 MiB/s                                                                                                                                                                                     | 250 MiB/s                                                                                                                                                                                       |
+| **Multi-attach**      | Not supported                                                                                                                                                                                   | Not supported                                                                                                                                                                                   |
+| **NVMe reservations** | Not supported                                                                                                                                                                                   | Not supported                                                                                                                                                                                   |
+| **Boot volume**       | Supported                                                                                                                                                                                       | Supported                                                                                                                                                                                       |
+
+<br>
+
+#### Amazon EBS Provisioned IOPS SSD volumes
+
+| Attribute             | io2 Block Express                                                                                                                            | io1                                                                                                                |
+|:----------------------|:---------------------------------------------------------------------------------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------|
+| **Durability**        | 99.999% durability (0.001% annual failure rate)                                                                                              | 99.8% - 99.9% durability (0.1% - 0.2% annual failure rate)                                                         |
+| **Use cases**         | Workloads that require:<br>- Sub-millisecond latency<br>- Sustained IOPS performance<br>- More than 64,000 IOPS or 1,000 MiB/s of throughput | - Workloads that require sustained IOPS performance or more than 16,000 IOPS<br>- I/O-intensive database workloads |
+| **Volume size**       | 4 GiB - 64 TiB                                                                                                                               | 4 GiB - 16 TiB                                                                                                     |
+| **Max IOPS**          | 256,000 (16 KiB I/O)                                                                                                                         | 64,000 (16 KiB I/O)                                                                                                |
+| **Max throughput**    | 4,000 MiB/s                                                                                                                                  | 1,000 MiB/s                                                                                                        |
+| **Multi-attach**      | Supported                                                                                                                                    | Supported                                                                                                          |
+| **NVMe reservations** | Supported                                                                                                                                    | Not supported                                                                                                      |
+| **Boot volume**       | Supported                                                                                                                                    | Supported                                                                                                          |
+
+
+https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html#solid-state-drives
 
 ## EBS Volume Management
 
@@ -251,6 +331,16 @@ sudo xfs_growfs /mnt/my-volume  # For XFS
 - **Pending**: Snapshot is being created
 - **Completed**: Snapshot is ready for use
 - **Error**: Snapshot creation failed
+
+### Archiving Snapshot
+Snapshots can be archived to Amazon S3 Glacier for long-term storage, reducing costs while retaining data for compliance
+or disaster recovery purposes. Archived snapshots can be restored to EBS volumes when needed.
+
+For archiving a snapshot, select the snapshot from EC2 > Elastic Block Store > Snapshots, click on Actions > Archive
+Snapshot. This will move the snapshot to Amazon S3 Glacier, and it will no longer be available for immediate use. To
+restore an archived snapshot, select the archived snapshot and click on Actions > Restore Snapshot. This will create a
+new snapshot from the archived snapshot, which can then be used to create a new EBS volume. **Archived snapshots can
+take several hours to restore, so plan accordingly.**
 
 ### Take a snapshot of EBS volume and copy it to another availability zone and attach it to another EC2 instance
 In our current EC2 create a folder `myfolder` and create a file `test.txt` add `hello` in it.
@@ -428,16 +518,37 @@ the snapshot. IT IS NOT FREE UNDER FREE TIER.
 ### Encryption Features
 - **At Rest**: Data stored on volumes is encrypted
 - **In Transit**: Data moving between instance and volume is encrypted
-- **Snapshots**: Encrypted volumes create encrypted snapshots
-- **Key Management**: Uses AWS KMS (Key Management Service)
-- **Performance**: Minimal impact on performance
+- **Snapshots**: Encrypted volumes create encrypted snapshots, and every snapshot from unencrypted volume is also be not
+  encrypted
+- **Key Management**: Uses AWS KMS (Key Management Service) - AES256
+- **Performance**: Minimal impact on performance like latency
 - **Transparent**: No changes needed to applications
+- **Volume creation from snapshots**: Encrypted snapshots can be used to create new encrypted volumes
+- Encryption and decryption are handled automatically by EBS, so you don't need to manage encryption keys or processes.
 
-### Encryption Process
+### Encryption Process while creating EBS Volume
 1. **Create Encrypted Volume**: Enable encryption when creating volume
 2. **Choose KMS Key**: Use AWS managed key or customer managed key
 3. **Attach to Instance**: Mount and use like any other volume
 4. **Snapshots**: Automatically encrypted with same key
+
+### Encrypt and non-encrypted EBS Volume
+* Create a snapshot of an unencrypted EBS volume, it will be unencrypted.
+  * Select the volume from EC2 > Elastic Block Store > Volumes, click on Actions > Create Snapshot.
+  * From create snapshot page give a description for the snapshot and click on "Create snapshot" button.
+* Copy the snapshot to create an encrypted snapshot.
+  * Select the snapshot from EC2 > Elastic Block Store > Snapshots, click on Actions > Copy Snapshot.
+  * From copy snapshot page select the destination region, give a description for the snapshot and check the "Encrypted"
+    checkbox, then click on "Copy Snapshot" button and keep KMS key as default.
+* Create a new encrypted EBS volume from the encrypted snapshot.
+  * Select the encrypted snapshot from EC2 > Elastic Block Store > Snapshots, click on Actions > Create Volume from
+    Snapshot.
+  * From create volume page select the availability zone, volume type and size, then click on "Create Volume" button. 
+    The Encrypt this volume will be checked by default and also disabled so we cannot uncheck it.
+
+Now at EC2 > Elastic Block Store > Volumes, we can see the newly created encrypted EBS volume. We can attach it to an
+EC2 instance and use it like any other EBS volume. The data stored in the encrypted volume will be automatically
+encrypted and decrypted by EBS, so we don't need to worry about managing encryption keys or processes.
 
 ### Encryption Commands
 ```bash
@@ -730,5 +841,15 @@ top (look for %wa column)
 - **Support Cases**: Contact AWS Support for assistance
 - **Business Justification**: Provide use case details
 
+
+* You are running a high-performance database that requires an IOPS of 310,000 for its underlying storage. What do you 
+  recommend?
+  * You can run a database on an EC2 instance that uses an Instance Store, but you'll have a problem that the data will
+    be lost if the EC2 instance is stopped (it can be restarted without problems). One solution is that you can set up a
+    replication mechanism on another EC2 instance with an Instance Store to have a standby copy. Another solution is to
+    set up backup mechanisms for your data. It's all up to you how you want to set up your architecture to validate your 
+    requirements. In this use case, it's around IOPS, so we have to choose an EC2 Instance Store.
+
 # Resources
 * [AWS in ONE VIDEO 🔥 For Beginners 2025 [HINDI] | MPrashant](https://www.youtube.com/watch?v=N4sJj-SxX00)
+* [Ultimate AWS Certified Solutions Architect Associate 2025](https://www.udemy.com/course/aws-certified-solutions-architect-associate-saa-c03)
