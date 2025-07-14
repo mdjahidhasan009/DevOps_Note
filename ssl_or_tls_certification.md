@@ -5,7 +5,15 @@ Encrypt data and ensure its
 *   confidentiality, and
 *   authenticity
 
-between a client and server.
+between a client and server. And it can be between two servers as well or client to load balancer.
+
+* SSL refers to Secure Sockets Layer, an older protocol, used to encrypt connection.
+* TLS refers to Transport Layer Security, the modern version of SSL, which is more secure and efficient.
+* Nowadays, TLS certificates are mainly used, but people still refer to them as SSL certificates.
+* Public SSL certificates are issued by Certificate Authorities (CAs) to verify the identity of websites and enable 
+  secure, encrypted communication over the internet like Comodo, Symantec, DigiCert, GoDaddy, GlobalSign, DigiCert, 
+  Letsencrypt, etc.
+* SSL certificates have a expiration date must be renewed periodically to maintain security.
 
 ### Security Concepts Analogy: Exam Papers
 
@@ -60,7 +68,8 @@ This uses a key pair:
 
 ### The TLS Handshake
 
-The client/browser and server perform a "handshake" to agree on security parameters and exchange keys before sending data.
+The client/browser and server perform a "handshake" to agree on security parameters and exchange keys before sending 
+data.
 
 *(Diagram shows a client/browser at banking.com initiating a handshake with a Banking Website server.)*
 
@@ -171,3 +180,4 @@ CAs ensure the authenticity and integrity of the SSL certificates they provide.
 
 # Resources
 * [AWS in ONE VIDEO 🔥 For Beginners 2025 [HINDI] | MPrashant](https://www.youtube.com/watch?v=N4sJj-SxX00)
+* [Ultimate AWS Certified Solutions Architect Associate 2025](https://www.udemy.com/course/aws-certified-solutions-architect-associate-saa-c03)
