@@ -2,7 +2,8 @@
 
 ## What is AWS RDS?
 
-AWS RDS as a managed database service that simplifies database setup, operation, and scaling.
+AWS RDS as a managed database service that simplifies database setup, operation, and scaling. It mainly supports 
+relational databases and automates administrative tasks such as backups, patching, monitoring, and scaling.
 
 **Purpose**: handling administrative tasks like backups, patching, monitoring, and scaling.
 
@@ -26,7 +27,7 @@ AWS RDS as a managed database service that simplifies database setup, operation,
 - **RDS for PostgreSQL**: Advanced open-source object-relational database
 - **RDS for Oracle**: Enterprise-grade commercial database
 - **RDS for Microsoft SQL Server**: Microsoft's relational database
-- **RDS for IBM Db2**: IBM's enterprise database system
+- **RDS for IBM DB2**: IBM's enterprise database system
 
 ### Engine Selection Criteria
 | Engine         | Best For                        | Key Features                                     |
@@ -70,6 +71,137 @@ Shared Storage Volume (up to 128TB)
 - **Durability**: Six-way replication across three AZs
 - **Backtrack**: Point-in-time recovery without restoring from backup
 - **Global Database**: Cross-region replication with low latency
+
+## Advantage over using RDS versus deploying DB on EC2
+
+*   RDS is a managed service:
+    *   Automated provisioning, OS patching
+    *   Continuous backups and restore to specific timestamp (Point in Time Restore)!
+    *   Monitoring dashboards
+    *   Read replicas for improved read performance
+    *   Multi AZ setup for DR (Disaster Recovery)
+    *   Maintenance windows for upgrades
+    *   Scaling capability (vertical and horizontal)
+    *   Storage backed by EBS
+*   BUT you can't SSH into your instances
+
+## RDS – Storage Auto Scaling
+
+*   Helps you increase storage on your RDS DB instance dynamically
+*   When RDS detects you are running out of free database storage, it scales automatically
+*   Avoid manually scaling your database storage
+*   You have to set Maximum Storage Threshold (maximum limit for DB storage)
+*   Automatically modify storage if:
+    *   Free storage is less than 10% of allocated storage
+    *   Low-storage lasts at least 5 minutes
+    *   6 hours have passed since last modification
+*   Useful for applications with unpredictable workloads
+*   Supports all RDS database engines
+
+## RDS Read Replicas for read scalability
+
+*   Up to 15 Read Replicas
+*   Within AZ, Cross AZ or Cross Region
+*   Replication is ASYNC, so reads are eventually consistent
+*   Replicas can be promoted to their own DB
+*   Applications must update the connection string to leverage read replicas
+
+## RDS Read Replicas – Use Cases
+
+*   You have a production database that is taking on normal load
+*   You want to run a reporting application to run some analytics
+*   You create a Read Replica to run the new workload there
+*   The production application is unaffected
+*   Read replicas are used for SELECT (=read) only kind of statements (not INSERT, UPDATE, DELETE)
+
+## RDS Read Replicas – Network Cost
+
+*   In AWS there's a network cost when data goes from one AZ to another
+*   For RDS Read Replicas within the same region, you don't pay that fee
+
+## RDS Multi AZ (Disaster Recovery)
+
+*   SYNC replication
+*   One DNS name – automatic app failover to standby
+*   Increase availability
+*   Failover in case of loss of AZ, loss of network, instance or storage failure
+*   No manual intervention in apps
+*   Not used for scaling
+*   **Note:** The Read Replicas be setup as Multi AZ for Disaster Recovery (DR)
+
+## RDS – From Single-AZ to Multi-AZ
+
+*   Zero downtime operation (no need to stop the DB)
+*   Just click on “modify” for the database
+*   The following happens internally:
+    *   A snapshot is taken
+    *   A new DB is restored from the snapshot in a new AZ
+    *   Synchronization is established between the two databases
+
+## RDS Custom
+
+*   Managed Oracle and Microsoft SQL Server Database with OS and database customization
+*   RDS: Automates setup, operation, and scaling of database in AWS
+*   Custom: access to the underlying database and OS so you can
+    *   Configure settings
+    *   Install patches
+    *   Enable native features
+    *   Access the underlying EC2 Instance using SSH or SSM Session Manager
+*   De-activate Automation Mode to perform your customization, better to take a DB snapshot before
+*   RDS vs. RDS Custom
+    *   RDS: entire database and the OS to be managed by AWS
+    *   RDS Custom: full admin access to the underlying OS and the database
+
+### **Amazon Aurora**
+
+*   Aurora is a proprietary technology from AWS (not open sourced)
+*   Postgres and MySQL are both supported as Aurora DB (that means your drivers will work as if Aurora was a Postgres or MySQL database)
+*   Aurora is “AWS cloud optimized” and claims 5x performance improvement over MySQL on RDS, over 3x the performance of Postgres on RDS
+*   Aurora storage automatically grows in increments of 10GB, up to 128 TB.
+*   Aurora can have up to 15 replicas and the replication process is faster than MySQL (sub 10 ms replica lag)
+*   Failover in Aurora is instantaneous. It’s HA native.
+*   Aurora costs more than RDS (20% more) – but is more efficient
+
+### **Aurora High Availability and Read Scaling**
+
+
+*   6 copies of your data across 3 AZ:
+    *   4 copies out of 6 needed for writes
+    *   3 copies out of 6 need for reads
+    *   Self healing with peer-to-peer replication
+    *   Storage is striped across 100s of volumes
+*   One Aurora Instance takes writes (master)
+*   Automated failover for master in less than 30 seconds
+*   Master + up to 15 Aurora Read Replicas serve reads
+*   Support for Cross Region Replication
+
+
+### **Aurora DB Cluster**
+
+*(Diagram text)*
+*   client
+*   Writer Endpoint
+    *   Pointing to the master, if master fails, it will point to the new master so that applications don't need to 
+        change the connection string
+*   Reader Endpoint
+    *   Connection Load Balancing, it will point to the read replicas automatically if scaling happens user doesn't need
+        to change the connection string, also help with load balancing
+*   Auto Scaling
+*   Shared storage Volume
+*   Auto Expanding from 10G to 128 TB
+
+
+### **Features of Aurora**
+
+*   Automatic fail-over
+*   Backup and Recovery
+*   Isolation and security
+*   Industry compliance
+*   Push-button scaling
+*   Automated Patching with Zero Downtime
+*   Advanced Monitoring
+*   Routine Maintenance
+*   Backtrack: restore data at any point of time without using backups
 
 ## Benefits of Using RDS
 
@@ -769,5 +901,311 @@ Outbound:
 - **Caching**: Implement ElastiCache for performance
 - **Serverless**: Consider Aurora Serverless for variable workloads
 
+# Practical
+## Practical walkthrough Example 1
+From RDS > Dashboard, click on "Create database". It will take you to the "Create database" page.
+
+### Choose a database creation method
+"Choose a database creation method" select "Standard Create".
+* **Standard create**: You set all of the configuration options, including ones for availability, security, backups, and
+  maintenance.
+* **Easy create**: You set only the basic configuration options, and Amazon RDS sets the rest of the options for you. 
+  * Use recommended best-practice configurations. Some configuration options can be changed after the database is created.
+
+### Configuration
+#### Engine options
+"Engine options" select "MySQL" from the "Engine options" section.
+* **Aurora (MySQL compatible)**: Up to 5x the performance of MySQL Community Edition.
+* **Aurora (PostgreSQL compatible)**: Up to 3x the performance of PostgreSQL.
+* **MySQL**: The most popular open-source relational database.
+* **MariaDB**: A MySQL-compatible database with additional features.
+* **PostgreSQL**: An advanced open-source object-relational database.
+* **Oracle**: An enterprise-grade commercial database.
+* **Microsoft SQL Server**: A relational database from Microsoft.
+
+"Edition" is automatically selected as "MySQL Community" when you select "MySQL" from the "Engine options". And cannot 
+be changed.
+
+At "Engine version" will be filter options 
+* Show only versions that support the Multi-AZ DB cluster
+  * Create a A Multi-AZ DB cluster with one primary DB instance and two readable standby DB instances. Multi-AZ DB 
+  clusters provide up to 2x faster transaction commit latency and automatic failover in typically under 35 seconds.
+* Show only versions that support the Amazon RDS Optimized Writes
+  * Amazon RDS Optimized Writes improves write throughput by up to 2x at no additional cost.
+
+And version "MySQL 8.0.41" is selected by default and we will keep it as default. And will keep "Enable RDS Extended
+Support" unchecked as default.
+
+### Templates
+"Templates" select "Production" from the "Templates" section.
+* **Free tier**: Use the free tier for 12 months. The free tier includes 750 hours of db.t4g.micro instances each month,
+  20 GB of storage, and 20 GB of backup storage.
+  * Available EC2 instance types: db.t4g.micro, db.t3.micro.
+* **Production**: Use production-ready configurations for high availability, performance, and security.
+* **Dev/Test**: Use configurations for development and testing environments with lower availability and performance 
+  requirements.
+
+### Availability and durability
+#### Deployment options
+"Deployment options" select "Single-AZ DB instance" from the "Deployment options" section.
+* **Multi-AZ DB cluster deployment (3 instances)** 
+  * Create a Multi-AZ DB cluster with one primary DB instance and two readable standby DB instances. Multi-AZ DB clusters 
+  provide up to 2x faster transaction commit latency and automatic failover in typically under 35 seconds.
+    * 99.95% uptime
+    * Redundancy across Availability Zones
+    * Increased read capacity
+    * Reduced write latency
+* **Multi-AZ DB instance deployment (2 instances)**
+  * Create a Multi-AZ DB instance with one primary DB instance and one standby DB instance. Multi-AZ DB instances provide 
+  automatic failover in typically under 60 seconds.
+    * 99.95% uptime
+    * Redundancy across Availability Zones
+    * Increased read capacity
+    * Reduced write latency
+* **Single-AZ DB instance deployment (1 instance)**
+  * Create a Single-AZ DB instance with one primary DB instance. Single-AZ DB instances provide the lowest cost and are 
+  suitable for development and testing environments.
+
+### Settings
+"Settings" enter "database-1" as DB instance identifier, "admin" as Master username and enter a password for the
+Master password. And keep "Self managed" as Credentials management   
+* **Managed in AWS Secrets Manager - most secure**: Use AWS Secrets Manager to manage your database credentials. 
+  This option provides the highest level of security and is recommended for production environments.
+* **Self managed - least secure**: Manage your database credentials yourself. This option is suitable for development 
+  and testing environments.
+
+### Instance configuration
+#### DB instance class
+"DB instance class" select "db.t3.micro" from the "DB instance class" section.
+
+If **Multi-AZ DB cluster deployment (3 instances)** is selected then options are:
+* Standard classes (includes m classes)
+* Memory optimized classes (includes r classes)
+* Compute optimized classes (includes c classes)
+
+If **Multi-AZ DB instance deployment (2 instances)** is selected then options are:
+* Standard classes (includes m classes)
+* Memory optimized classes (includes r and x classes)
+* Burstable classes (includes t classes)
+
+If **Single-AZ DB instance deployment (1 instance)** is selected then options are:
+* Standard classes (includes m classes)
+* Memory optimized classes (includes r and x classes)
+* Burstable classes (includes t classes)
+
+### Storage
+#### Storage type
+"Storage type" select "General purpose SSD (gp2)" from the "Storage type" section to be in free tier. At production
+use io1 or io2 storage types.
+* **General purpose SSD (gp2)**: Balanced price and performance for most workloads.
+* **Provisioned IOPS SSD (io1)**: High performance for I/O-intensive workloads.
+* **Magnetic (standard)**: Low-cost storage for infrequently accessed data.
+
+#### Allocated storage
+Allocated storage giving 10 GiB.
+
+From "Additional storage configuration" check "Enable storage autoscaling" to automatically increase the storage size
+when needed. And keep "Maximum storage threshold" as default 1,000 IOPS.
+
+### Connectivity 
+#### Compute resource
+"Compute resource" select "Don't connect to an EC2 compute resource" from the "Compute resource" section.
+* **Connect to an existing EC2 compute resource**: Connect the RDS instance to an existing EC2 instance. This option 
+  is suitable for applications that require low-latency access to the database. **Not recommended for production use**.
+* **Don't connect to an EC2 compute resource**: Do not connect the RDS instance to an EC2 instance. This option is 
+  suitable for applications that do not require low-latency access to the database.
+
+#### Network type
+"Network type" select "IPv4" from the "Network type" section.
+
+#### Virtual private cloud (VPC)
+"Virtual private cloud (VPC)" select "default VPC" from the "Virtual private cloud (VPC)" section.
+
+#### Public access
+"Public access" select "Yes" from the "Public access" section to access the RDS instance from the internet.
+* **Yes**: Allow public access to the RDS instance. This option is suitable for development and testing environments.
+* **No**: Do not allow public access to the RDS instance. This option is suitable for production environments.
+
+#### VPC security group (firewall)
+"VPC security group (firewall)" select "Create new" from the "VPC security group (firewall)" section and enter
+"SG_created_by_RDS" as New VPC security group name, "Availability Zone" as "No preference".
+
+#### RDS Proxy
+RDS Proxy is a fully managed, highly available database proxy that improves application scalability, resiliency, and
+security. RDS automatically creates an IAM role and a Secrets Manager secret for the proxy. RDS Proxy has additional 
+costs.
+
+Keep "Create an RDS Proxy" as unchecked as default.
+
+#### Certificate authority - optional
+Using a server certificate provides an extra layer of security by validating that the connection is being made to an
+Amazon database. It does so by checking the server certificate that is automatically installed on all databases that you
+provision.
+
+If you don't select a certificate authority, RDS chooses one for you.
+
+### Database authentication
+"Database authentication" select "Password authentication" from the "Database authentication" section.
+* **Password authentication**: Use a username and password to authenticate to the database. This option is suitable for
+  most applications.
+* **IAM database authentication**: Use AWS Identity and Access Management (IAM) to authenticate to the database. This 
+  option is suitable for applications that require fine-grained access control and integration with other AWS services.
+* **Password and IAM database authentication**: Use both password and IAM authentication. This option is suitable for 
+  applications that require both types of authentication.
+
+### Monitoring
+"Monitoring" keep "Database Insights" as selected from the "Monitoring" section.
+* **Database Insights - Advanced": Provides advanced monitoring and performance insights for the database. 
+  This option is suitable for production environments.
+* **Database Insights - Standard**: Provides basic monitoring and performance insights for the database. 
+  This option is suitable for development and testing environments.
+
+#### Enhanced Monitoring
+Keep "Enable Enhanced monitoring" unchecked. If it is checked then there will be additional costs. Enhanced monitoring
+provides real-time metrics for the database instance, including CPU, memory, disk, and network usage. It also provides
+detailed information about the database engine, such as query performance and wait events.
+If checked then will have "OS metrics granularity", "Monitoring role for OS metrics".
+
+#### Log exports
+There will be many options to export logs to CloudWatch Logs. We will keep all of them unchecked as default.
+* **Audit log**: Export the database audit log to CloudWatch Logs.
+* **Error log**: Export the database error log to CloudWatch Logs.
+* **General log**: Export the database general log to CloudWatch Logs.
+* **iam-db-auth-error log**: Export the IAM database authentication error log to CloudWatch Logs.
+* **Slow query log**: Export the database slow query log to CloudWatch Logs.
+
+### Additional configuration
+#### Database options
+#### Initial database name
+TestDB
+#### DB parameter group
+Keep default "default.mysql8.0"
+#### Option group
+Keep default "default:mysql-8-0"
+
+#### Backup
+We will keep "Enable automated backups" unchecked. If we checked it then there will be "Backup retention period"
+* **Backup retention period**: The number of days to retain automated backups. The default is 1 day, and the maximum is 
+  35 days.
+* **Backup window**: The time period during which automated backups are created. The default is a 30-minute window that
+  starts at a random time within the specified time zone.
+  * **Choose a window**: Select a time period during which automated backups are created. The default is a 30-minute window 
+    that starts at a random time within the specified time zone.
+  * **No preference**: RDS chooses a time period for automated backups. This option is suitable for most applications.
+
+#### Backup replication
+If "Enable automated backups" is checked then will have "Backup replication" options. If we checked "Enable replication
+in another AWS Region" then will have
+* **Destination Region**: The AWS Region to which the backups are replicated. This option is suitable for disaster 
+  recovery and cross-region replication.
+* **Replicated backup retention period**: The number of days to retain replicated backups. The default is 7 days, and 
+  the maximum is 35 days.
+
+#### Enable encryption
+If we checked "Enable encryption" then will have "KMS key" options.
+
+#### Maintenance
+We can check "Enable automatic minor version upgrade" to automatically upgrade the database engine to the latest minor
+version. This option is suitable for most applications.
+
+#### Maintenance window
+Select the period you want pending modifications or maintenance applied to the database by Amazon RDS.
+* **Choose a window**: Select a start day like monday, tuesday, etc. and a start time like 00:00 UTC and duration
+  like 30 minutes. This option is suitable for most applications.
+* **No preference**: RDS chooses a time period for maintenance. This option is suitable for most applications.
+
+#### Deletion protection
+We can check "Enable deletion protection" to prevent accidental deletion of the database. This option is suitable for
+production environments. If checked then will have "Deletion protection" options.
+
+Now click on "Create database" button to create the RDS instance.
+
+If we go to RDS > Databases, we can see the newly created RDS instance. It will take some time to create the RDS
+instance. Once the status is "Available", we can connect to the database. Click on the RDS instance to see the
+and will see new security group created by RDS but in that group we can see that port 3306 is not open to
+everywhere. So we will give it access to everywhere by putting 0.0.0.0 as the source in the security group.
+
+RDS > Databases, click on new RDS instance click on "Connectivity & security" tab, Enpoint and port will be there. Copy
+those put those into Sqelectron using server address, port 3306, username admin and password you set during RDS
+instance creation. After conneting to the db we can see all the databases and tables in the RDS instance.
+
+While inside of the rds instance, we can click on "Actions" button and select "Create read replica" to create a read
+replica of the RDS instance. (Althoungh for my case it is not available as I selected Single-AZ DB instance deployment
+(1 instance) for free tier.) From "Actions" button we can also take snapshot of the RDS instance by selecting "Take
+snapshot". Also can migrate the snapshot to another region by selecting "Migrate snapshot". 
+
+For deleting first remove deleting protection by clicking on "Modify" button and unchecking "Enable deletion protection"
+and then click on "Continue" button and then click on "Modify DB instance" button. After that click on "Actions" button 
+andselect "Delete". In the delete confirmation dialog, check the "I acknowledge that I want to delete this DB instance"
+checkbox also uncheck "Create final snapshot" and click on "Delete" button.
+
+
+
+## Practical walkthrough Example 2
+RDS > Databases, click on "Create database" button. It will take you to the "Create database" page.
+
+Choose a database creation method > Standard Create.
+Engine options > Aurora (MySQL compatible).
+Engine version > Aurora MySQL 3.08.02 (compatible with MySQL 8.0.39) - default for major version 8.0 -> this was default
+Template > Production.
+DB cluster identifier > DB2
+Master username -> Enter a username like "admin".
+Credentials management > Self managed -> Enter a password for the master user.
+
+### Cluster storage configuration
+#### Configuration options
+Choose "Aurora Standard" from the "Configuration options".
+
+* **Aurora I/O-Optimized**: Use Aurora I/O-Optimized storage for improved performance and cost savings.
+  * Predictable pricing for all applications. Improved price performance for I/O-intensive applications (I/O costs >25% 
+    of total database costs).
+  * No additional charges for read/write I/O operations. DB instance and storage prices include I/O usage.
+* **Aurora Standard**: Use Aurora Standard storage for general-purpose workloads.
+  * Cost-effective pricing for many applications with moderate I/O usage (I/O costs <25% of total database costs).
+  * Pay-per-request I/O charges apply. DB instance and storage prices don’t include I/O usage.
+
+### Instance configuration
+Select "Bustable classes (includes t classes)" from the "DB instance class" section with db.t3.medium as default.
+* **Serverless v2**: Automatically scales compute capacity based on workload demand. Ideal for variable workloads.
+  * Capacity range
+    * Minimum capacity (ACUs) 
+    * Maximum capacity (ACUs)
+    * Pause after inactivity
+* **Memory optimized classes (includes r classes)**: High memory-to-CPU ratio for memory-intensive applications.
+* **Burstable classes (includes t classes)**: Cost-effective option for workloads with variable CPU
+
+### Availability & durability 
+#### Multi-AZ deployment
+Select "Don't create an Aurora Replica" 
+
+* Create an Aurora Replica or Reader node in a different AZ (recommended for scaled availability)
+* Don't create an Aurora Replica
+
+### Connectivity 
+Compute resource select "Don't connect to an EC2 compute resource" from the "Compute resource" section.
+Network type select "IPv4" from the "Network type" section.
+Virtual private cloud (VPC) select "default VPC" from the "Virtual private cloud (VPC)" section.
+Public access select "Yes" from the "Public access" section to access the RDS instance from the internet.
+VPC security group (firewall) select "Create new" from the "VPC security group (firewall)" section and enter
+"SG_created_by_RDS_For_Aurora" as "New VPC security group name", "Availability Zone" as "No preference".
+
+## Read replica write forwarding
+Keep unchecked "Turn on local write forwarding" as default.
+
+## Database authentication 
+Keep all those unchecked as default.
+* IAM database authentication
+  * Authenticates using IAM database authentication.
+* Kerberos authentication
+  * Authenticates using Kerberos authentication through an AWS Directory Service for Microsoft Active Directory.
+
+
+## Monitoring
+select Database Insights - Standard
+
+
+
+
 # Resources
 * [AWS in ONE VIDEO 🔥 For Beginners 2025 [HINDI] | MPrashant](https://www.youtube.com/watch?v=N4sJj-SxX00)
+* [Ultimate AWS Certified Solutions Architect Associate 2025](https://www.udemy.com/course/aws-certified-solutions-architect-associate-saa-c03)
