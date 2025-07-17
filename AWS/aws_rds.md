@@ -152,7 +152,7 @@ Shared Storage Volume (up to 128TB)
     *   RDS: entire database and the OS to be managed by AWS
     *   RDS Custom: full admin access to the underlying OS and the database
 
-### **Amazon Aurora**
+# **Amazon Aurora**
 
 *   Aurora is a proprietary technology from AWS (not open sourced)
 *   Postgres and MySQL are both supported as Aurora DB (that means your drivers will work as if Aurora was a Postgres or MySQL database)
@@ -178,7 +178,6 @@ Shared Storage Volume (up to 128TB)
 
 ### **Aurora DB Cluster**
 
-*(Diagram text)*
 *   client
 *   Writer Endpoint
     *   Pointing to the master, if master fails, it will point to the new master so that applications don't need to 
@@ -203,7 +202,419 @@ Shared Storage Volume (up to 128TB)
 *   Routine Maintenance
 *   Backtrack: restore data at any point of time without using backups
 
-## Benefits of Using RDS
+
+### Aurora Replicas - Auto Scaling
+Suppose Aurora is running with 1 Writer and 2 Readers, and the CPU usage of the readers is high, then Aurora will
+automatically add more readers and will extend the Reader Endpoint to include the new readers if the CPU usage is
+high. All read and write are happening in same shared storage volume.
+
+```shell
+
+                                    ┌─────────┐
+                                    │ ┌─────┐ │
+                                    │ │     │ │  Client
+                                    │ └─────┘ │
+                                    └─────────┘
+                                         │
+                                 Many Requests
+                                         │
+                           ┌─────────────┼─────────────┐
+                           │             │             │
+                           ▼             ▼             ▼
+                  ┌─────────────┐                ┌─────────────┐
+                  │             │                │             │
+                  │   Writer    │                │   Reader    │
+                  │  Endpoint   │                │  Endpoint   │
+                  │             │                │             │
+                  └─────────────┘                └─────────────┘
+                           │                              │
+                           │                              │
+                           ▼                              ▼
+                  ┌─────────────┐       ┌─────────────────────────────────────────┐
+                  │             │       │                                         │
+                  │   Amazon    │       │  ┌─────────┐ ┌─────────┐ ┌─────────┐    │
+                  │   Aurora    │       │  │ Amazon  │ │ Amazon  │ │ Amazon  │    │
+                  │ ┌─────────┐ │       │  │ Aurora  │ │ Aurora  │ │ Aurora  │    │
+                  │ │Database │ │       │  │  ↑ CPU  │ │  ↑ CPU  │ │ Endpoint│    │
+                  │ └─────────┘ │       │  │ Usage   │ │ Usage   │ │Extended │    │
+                  └─────────────┘       │  └─────────┘ └─────────┘ └─────────┘    │
+                           │            │       ↑             ↑                   │
+                        W  │            │       R             R                   │
+                           │            │                                         │
+                           │            └─────────────────────────────────────────┘
+                           │                              │
+                           │                    Replicas Auto Scaling
+                           │                              │
+                           ▼                              ▼
+     ┌─────────────────────────────────────────────────────────────────────────┐
+     │                                                                         │
+     │                     Shared Storage Volume                               │
+     │                                                                         │
+     └─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Aurora Replicas - Custom Endpoints
+
+```shell
+                                    ┌─────────┐
+                                    │ ┌─────┐ │
+                                    │ │     │ │  Client
+                                    │ └─────┘ │
+                                    └─────────┘
+                                         │
+                             ┌───────────┼─────────────────────────────────────┐
+                             │           │                                     │
+                             │           │                                Analytical Queries
+                             │           │                                     │
+                             ▼           │                                     ▼
+                  ┌─────────────────┐    │                              ┌──────────────────┐
+                  │                 │    │                              │                  │
+                  │ Writer Endpoint │    │                              │ Custom Endpoint  │
+                  │                 │    │                              │                  │
+                  └─────────────────┘    │                              └──────────────────┘
+                           │             │                                        │
+                           │             │                              ┌─────────┼───┐
+                           ▼             │                              │             │     
+                  ┌─────────────────┐    │                              ▼             ▼       
+                  │     Amazon      │    │         
+                  │     Aurora      │    │         
+                  │ ┌─────────────┐ │    │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
+                  │ │   Primary   │ │    │  │ Amazon  │ │ Amazon  │ │ Amazon  │ │ Amazon  │
+                  │ │   Writer    │ │    │  │ Aurora  │ │ Aurora  │ │ Aurora  │ │ Aurora  │
+                  │ │ ┌─────────┐ │ │    │  │         │ │         │ │         │ │         │
+                  │ │ │Database │ │ │    │  │db.r3.   │ │db.r3.   │ │db.r5.2x │ │db.r5.2x │
+                  │ │ └─────────┘ │ │    │  │ large   │ │ large   │ │ large   │ │ large   │
+                  │ └─────────────┘ │    │  └─────────┘ └─────────┘ └─────────┘ └─────────┘
+                  └─────────────────┘    │       ▲           ▲          ▲           ▲      
+                           │             │       │           │          │           │      
+                        W  │             │       R(IDLE)     R(IDLE)    R           R  
+                           │             │       │           │          │           │
+                           │             │       │           │          │           │
+                           │             │       │           │          │           │
+                           │             │       │           │          │           │
+                           ▼             ▼       │           │          │           │
+     ┌──────────────────────────────────────────────────────────────────────────────────┐
+     │                                                                                  │
+     │                     Shared Storage Volume                                        │
+     │                                                                                  │
+     └──────────────────────────────────────────────────────────────────────────────────┘
+```
+Key Features:
+• Define subset of Aurora Instances as Custom Endpoint
+• Example: Run analytical queries on specific high-performance replicas
+• Reader Endpoint generally not used after defining Custom Endpoints
+• Custom endpoints allow workload isolation and resource optimization
+
+Notes:
+What: Define subset of Aurora replicas as dedicated endpoint
+Why: Isolate workloads (OLTP vs Analytics) and optimize performance
+How: Route analytical queries to high-performance instances (db.r5.2xlarge)
+     Route regular queries to standard instances (db.r3.large)
+
+⚠️  THE IDLE INSTANCE PROBLEM:
+• Custom Endpoint only uses selected instances (db.r5.2xlarge)
+• Other instances (db.r3.large) sit IDLE = waste money 💸
+• All instances have same data (shared storage volume)
+
+SOLUTIONS:
+1. Multiple Custom Endpoints:
+   • Custom Endpoint (Analytics): db.r5.2xlarge instances
+   • Custom Endpoint (App Reads): db.r3.large instances
+   • Reader Endpoint: DISABLED
+
+2. Hybrid Approach:
+   • Custom Endpoint (Analytics): db.r5.2xlarge instances  
+   • Reader Endpoint: ALL instances (load balances across all)
+
+3. Right-Size Cluster:
+   • Remove unused instances
+   • Only keep what you actively use
+
+Benefits:
+• Workload separation - analytics don't impact transactions
+• Performance predictability - dedicated resources per workload
+• Cost optimization - right-size instances for specific needs
+
+Best Practices:
+• Plan capacity carefully - avoid idle instances
+• Create multiple Custom Endpoints to utilize all instances
+• Use Writer Endpoint for writes only
+• Group similar instance types together
+• Monitor utilization across all endpoints
+
+Trade-offs:
+• More complex than single Reader Endpoint
+• Higher management overhead  
+• Need multiple connection strings in applications
+• Risk of idle instances if not planned properly
+
+
+### Aurora Backups
+
+*   Automated backups
+    *   1 to 35 days (cannot be disabled)
+    *   point-in-time recovery in that timeframe
+*   Manual DB Snapshots
+    *   Manually triggered by the user
+    *   Retention of backup for as long as you want
+
+### Aurora Serverless
+Aurora Serverless is an on-demand, auto-scaling configuration for Amazon Aurora. It automatically starts up, shuts down, and scales capacity up or down based on your application's needs.
+
+#### Key Features
+
+- **Automated database instantiation and auto-scaling** based on actual usage
+- **Good for infrequent, intermittent or unpredictable workloads**
+- **No capacity planning needed**
+- **Pay per second, can be more cost-effective**
+
+#### Benefits
+
+#### Cost Optimization
+- Pay only for the database resources you actually use
+- No need to pay for idle capacity
+- Per-second billing
+
+#### Operational Simplicity
+- No capacity planning required
+- Automatic scaling eliminates manual intervention
+- Managed proxy fleet handles connections
+
+#### Use Cases
+- **Infrequent workloads**: Applications that run a few times per day/week
+- **Intermittent workloads**: Applications with sporadic usage patterns
+- **Unpredictable workloads**: Applications with varying traffic patterns
+- **Development/testing environments**: Non-production workloads
+
+#### How It Works
+
+1. **Proxy Fleet**: Managed by Aurora, handles client connections
+2. **Auto-scaling**: Database instances scale up/down automatically
+3. **Shared Storage**: All instances use the same storage volume
+4. **Pay-per-use**: Billing based on actual consumption
+
+#### Architecture Components
+
+- **Client**: Application connecting to the database
+- **Proxy Fleet**: Aurora-managed connection proxy 
+- **Aurora Instances**: Auto-scaled database instances
+- **Shared Storage Volume**: Common storage for all instances
+
+### When to Use Aurora Serverless
+
+✅ **Good for:**
+- Variable or unpredictable workloads
+- Development and testing
+- Applications with long idle periods
+- Cost-sensitive projects
+
+❌ **Not ideal for:**
+- High-performance, consistent workloads
+- Applications requiring specific instance types
+- Workloads needing custom endpoints
+- Applications with strict latency requirements
+
+```shell
+                                    ┌─────────┐
+                                    │ ┌─────┐ │
+                                    │ │     │ │  Client
+                                    │ └─────┘ │
+                                    └─────────┘
+                                         │
+                                         │
+                                         ▼
+                          ┌─────────────────────────────────┐
+                          │                                 │
+                          │        Proxy Fleet              │
+                          │    (managed by Aurora)          │
+                          │                                 │
+                          └─────────────────────────────────┘
+                                         │
+                    ┌────────────────────┼────────────────────┐
+                    │                    │                    │
+                    ▼                    ▼                    ▼
+         ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+         │     Amazon      │  │     Amazon      │  │     Amazon      │
+         │     Aurora      │  │     Aurora      │  │     Aurora      │
+         │ ┌─────────────┐ │  │ ┌─────────────┐ │  │ ┌─────────────┐ │
+         │ │   Database  │ │  │ │   Database  │ │  │ │   Database  │ │
+         │ └─────────────┘ │  │ └─────────────┘ │  │ └─────────────┘ │
+         └─────────────────┘  └─────────────────┘  └─────────────────┘
+                    │                    │                    │
+                    │                    │                    │
+                    └────────────────────┼────────────────────┘
+                                         │
+                                         ▼
+     ┌─────────────────────────────────────────────────────────────────────────┐
+     │                                                                         │
+     │                     Shared Storage Volume                               │
+     │                                                                         │
+     └─────────────────────────────────────────────────────────────────────────┘
+```
+
+
+### Global Aurora
+
+*   Aurora Cross Region Read Replicas:
+    *   Useful for disaster recovery
+    *   Simple to put in place
+*   Aurora Global Database (recommended):
+    *   1 Primary Region (read / write)
+    *   Up to 5 secondary (read-only) regions, replication lag is less than 1 second
+    *   Up to 16 Read Replicas per secondary region
+    *   Helps for decreasing latency
+    *   Promoting another region (for disaster recovery) has an RTO of < 1 minute
+    *   Typical cross-region replication takes less than 1 second
+
+```shell
+┌─────────────────────────────────────────────────────────────┐
+│ 🇺🇸 us-east-1 - PRIMARY region                               │
+│                                                             │
+│                                                             │
+│   ┌───────┐   ┌───────┐                                     │
+│   │       │   │       │    ◄────►    ┌─────────────────┐    │
+│   │ App   │   │ App   │              │     Amazon      │    │
+│   │       │   │       │    ◄────►    │     Aurora      │    │
+│   └───────┘   └───────┘              │ ┌─────────────┐ │    │
+│                                      │ │  Database   │ │    │
+│   Applications                       │ └─────────────┘ │    │
+│   Read / Write                       └─────────────────┘    │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              │ replication
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 🇪🇺 eu-west-1 - SECONDARY region                             │
+│                                                             │
+│                                                             │
+│   ┌───────┐   ┌───────┐                                     │
+│   │       │   │       │    ──────►    ┌─────────────────┐   │
+│   │ App   │   │ App   │               │     Amazon      │   │
+│   │       │   │       │    ──────►    │     Aurora      │   │
+│   └───────┘   └───────┘               │ ┌─────────────┐ │   │
+│                                       │ │  Database   │ │   │
+│   Applications                        │ └─────────────┘ │   │
+│   Read Only                           └─────────────────┘   │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Aurora Machine Learning
+
+*   Enables you to add ML-based predictions to your applications via SQL
+*   Simple, optimized, and secure integration between Aurora and AWS ML services
+*   Supported services
+    *   Amazon SageMaker (use with any ML model)
+    *   Amazon Comprehend (for sentiment analysis)
+*   You don't need to have ML experience
+*   Use cases: fraud detection, ads targeting, sentiment analysis, product recommendations
+
+```shell
+                      ┌─────────────────────┐
+                      │ ┌─────────────────┐ │
+                      │ │   ⚙️ 📊 💻     │ │  Application
+                      │ └─────────────────┘ │
+                      └─────────────────────┘
+                       │                 ▲
+                       │                 │
+                       │       query results
+                       │    (red shirt, blue ...)
+                       │                 │
+         SQL query     │                 │
+    (Recommended products?)              │
+                       │                 │
+                       ▼                 │
+                      ┌─────────────────────┐
+                      │                     │
+                      │    Amazon Aurora    │
+                      │  ┌─────────────────┐│
+                      │  │ 🗄️ ✨ Database ││
+                      │  └─────────────────┘│
+                      └──────────────────▲──┘
+                          │              │
+                          │              │
+                   data   │             predictions
+             (user's profile,           (red shirt,
+            shopping history,            blue pants, ...)
+                  ...)    │              │
+                          │              │
+                      ┌───▼─────────────────────────────┐
+                      │                                 │
+                      │ ┌─────────────┐ ┌─────────────┐ │
+                      │ │             │ │             │ │
+                      │ │   Amazon    │ │   Amazon    │ │
+                      │ │  SageMaker  │ │ Comprehend  │ │
+                      │ │     🧠🔬   │ │     📝💡   │ │
+                      │ │             │ │             │ │
+                      │ └─────────────┘ └─────────────┘ │
+                      │                                 │
+                      └─────────────────────────────────┘
+```
+
+### Babelfish for Aurora PostgreSQL
+
+*   Allows Aurora PostgreSQL to understand commands targeted for MS SQL Server (e.g., T-SQL)
+*   Therefore Microsoft SQL Server based applications can work on Aurora PostgreSQL
+*   Requires no to little code changes (using the same MS SQL Server client driver)
+*   The same applications can be used after a migration of your database (using AWS SCT and DMS)
+
+
+suppose our application is using Microsoft SQL Server, and we want to migrate it to Aurora PostgreSQL with Babelfish support. The architecture would look like this: 
+
+We will migrate database from MSQL Server to Aurora PostgreSQL using AWS SCT or DMS. And for our old application, we 
+will use Babelfish to translate T-SQL to PL/pgSQL so that the application can work with Aurora PostgreSQL without any changes. And new application will use normal PostgreSQL driver to connect to Aurora PostgreSQL. This way we can convert
+our old application step by step to use PostgreSQL features and then remove Babelfish support when the application is fully converted.
+
+
+```shell
+    Application                           Application
+SQL Server Client Driver              PostgreSQL Driver
+┌─────────────────────┐               ┌─────────────────────┐
+│ ┌─────────────────┐ │               │ ┌─────────────────┐ │
+│ │ 🔷🔷🔷🔷🔷🔷 │ │               │ │ 🔶🔶🔶🔶🔶🔶 │ │
+│ │ 🔷🔷🔷🔷🔷🔷 │ │               │ │ 🔶🔶🔶🔶🔶🔶 │ │
+│ └─────────────────┘ │               │ └─────────────────┘ │
+└─────────────────────┘               └─────────────────────┘
+          │                                     │
+          │ T-SQL                               │ PL/pgSQL
+          │                                     │
+          │              ┌──────────────────────│──────────┐
+          │              │                      │          │
+          │              │ ┌─────────────┐ ┌─────────────┐ │
+          │              │ │             │ │             │ │
+          └──────────────┼─│  Babelfish  │ │ PostgreSQL  │ │
+          │              │ │             │ │             │ │
+          │              │ └─────────────┘ └─────────────┘ │
+          │              │                                 │
+          │              └─────────────────────────────────┘
+          │                             │
+          │                             │
+          │                             │
+          ▼                             ▼
+┌─────────────────────┐               ┌─────────────────────┐
+│                     │               │                     │
+│   Microsoft         │    migrate    │    Aurora           │
+│   SQL Server        │ ───────────►  │   PostgreSQL        │
+│ ┌─────────────────┐ │               │ ┌─────────────────┐ │
+│ │  🗄️ Database    │ │               │ │ 🗄️✨ Database  │ │
+│ └─────────────────┘ │               │ └─────────────────┘ │
+└─────────────────────┘               └─────────────────────┘
+```
+
+### Aurora Database Cloning
+
+*   Create a new Aurora DB Cluster from an existing one
+*   Faster than snapshot & restore
+*   Uses *copy-on-write* protocol
+    *   Initially, the new DB cluster uses the same data volume as the original DB cluster (fast and efficient – no copying is needed)
+    *   When updates are made to the new DB cluster data, then additional storage is allocated and data is copied to be separated
+*   Very fast & cost-effective
+*   Useful to create a “staging” database from a “production” database without impacting the production database
+
+
+# Benefits of Using RDS
 
 * **High availability and fault tolerance**
 * **Vertical and Horizontal Scaling**
@@ -212,15 +623,15 @@ Shared Storage Volume (up to 128TB)
 * **Multi AZ setup for DR (Disaster Recovery)**
 * **Cost-effectiveness**
 
-### Detailed Benefits Analysis
+## Detailed Benefits Analysis
 
-#### High Availability and Fault Tolerance
+### High Availability and Fault Tolerance
 - **Multi-AZ Deployments**: Automatic failover to standby instance
 - **Automated Backups**: Point-in-time recovery capability
 - **Maintenance Windows**: Scheduled maintenance with minimal downtime
 - **Health Monitoring**: Continuous monitoring with automatic recovery
 
-#### Scalability Options
+### Scalability Options
 - **Vertical Scaling**: Upgrade instance types with minimal downtime
 - **Horizontal Scaling**: Add read replicas for read-heavy workloads
 - **Storage Scaling**: Automatic or manual storage expansion
@@ -456,6 +867,30 @@ CREATE TABLE orders (
 - **Granularity**: Down to the second
 - **New Instance**: Creates new RDS instance
 - **Use Cases**: Data corruption recovery, testing
+
+#### RDS Backups
+
+*   Automated backups:
+    *   Daily full backup of the database (during the backup window)
+    *   Transaction logs are backed-up by RDS every 5 minutes
+    *   => ability to restore to any point in time (from oldest backup to 5 minutes ago)
+    *   1 to 35 days of retention, set 0 to disable automated backups
+*   Manual DB Snapshots
+    *   Manually triggered by the user
+    *   Retention of backup for as long as you want
+*   Trick: in a stopped RDS database, you will still pay for storage. If you plan on stopping it for a long time, you should snapshot & restore instead
+
+## Amazon RDS Proxy
+
+*   Fully managed database proxy for RDS
+*   Allows apps to pool and share DB connections established with the database
+*   Improving database efficiency by reducing the stress on database resources (e.g., CPU, RAM) and minimize open connections (and timeouts)
+*   Serverless, autoscaling, highly available (multi-AZ)
+*   Reduced RDS & Aurora failover time by up 66%
+*   Supports RDS (MySQL, PostgreSQL, MariaDB, MS SQL Server) and Aurora (MySQL, PostgreSQL)
+*   No code changes required for most apps
+*   Enforce IAM Authentication for DB, and securely store credentials in AWS Secrets Manager
+*   RDS Proxy is never publicly accessible (must be accessed from VPC)
 
 ## RDS Instance Quick Setup
 
@@ -901,6 +1336,34 @@ Outbound:
 - **Caching**: Implement ElastiCache for performance
 - **Serverless**: Consider Aurora Serverless for variable workloads
 
+# RDS & Aurora
+
+## RDS & Aurora Restore options
+
+*   Restoring a RDS / Aurora backup or a snapshot creates a new database
+
+*   Restoring MySQL RDS database from S3
+    *   Create a backup of your on-premises database
+    *   Store it on Amazon S3 (object storage)
+    *   Restore the backup file onto a new RDS instance running MySQL
+
+*   Restoring MySQL Aurora cluster from S3
+    *   Create a backup of your on-premises database using Percona XtraBackup
+    *   Store the backup file on Amazon S3
+    *   Restore the backup file onto a new Aurora cluster running MySQL
+
+## RDS & Aurora Security
+
+*   At-rest encryption:
+    *   Database master & replicas encryption using AWS KMS – must be defined as launch time
+    *   If the master is not encrypted, the read replicas cannot be encrypted
+    *   To encrypt an un-encrypted database, go through a DB snapshot & restore as encrypted
+*   In-flight encryption: TLS-ready by default, use the AWS TLS root certificates client-side
+*   IAM Authentication: IAM roles to connect to your database (instead of username/pw)
+*   Security Groups: Control Network access to your RDS / Aurora DB
+*   No SSH available except on RDS Custom
+*   Audit Logs can be enabled and sent to CloudWatch Logs for longer retention
+
 # Practical
 ## Practical walkthrough Example 1
 From RDS > Dashboard, click on "Create database". It will take you to the "Create database" page.
@@ -1165,7 +1628,7 @@ Choose "Aurora Standard" from the "Configuration options".
   * Pay-per-request I/O charges apply. DB instance and storage prices don’t include I/O usage.
 
 ### Instance configuration
-Select "Bustable classes (includes t classes)" from the "DB instance class" section with db.t3.medium as default.
+Select "Bustable classes (includes t classes)" from the "DB instance class" section with `db.t3.medium` as default.
 * **Serverless v2**: Automatically scales compute capacity based on workload demand. Ideal for variable workloads.
   * Capacity range
     * Minimum capacity (ACUs) 
@@ -1176,23 +1639,27 @@ Select "Bustable classes (includes t classes)" from the "DB instance class" sect
 
 ### Availability & durability 
 #### Multi-AZ deployment
-Select "Don't create an Aurora Replica" 
+Select "Create an Aurora Replica or Reader node in a different AZ (recommended for scaled availability)" 
 
 * Create an Aurora Replica or Reader node in a different AZ (recommended for scaled availability)
 * Don't create an Aurora Replica
 
 ### Connectivity 
+#### Compute resource
 Compute resource select "Don't connect to an EC2 compute resource" from the "Compute resource" section.
+* Don't connect to an EC2 compute resource
+* Connect to an existing EC2 compute resource
+
 Network type select "IPv4" from the "Network type" section.
 Virtual private cloud (VPC) select "default VPC" from the "Virtual private cloud (VPC)" section.
 Public access select "Yes" from the "Public access" section to access the RDS instance from the internet.
 VPC security group (firewall) select "Create new" from the "VPC security group (firewall)" section and enter
 "SG_created_by_RDS_For_Aurora" as "New VPC security group name", "Availability Zone" as "No preference".
 
-## Read replica write forwarding
+### Read replica write forwarding
 Keep unchecked "Turn on local write forwarding" as default.
 
-## Database authentication 
+### Database authentication 
 Keep all those unchecked as default.
 * IAM database authentication
   * Authenticates using IAM database authentication.
@@ -1200,11 +1667,80 @@ Keep all those unchecked as default.
   * Authenticates using Kerberos authentication through an AWS Directory Service for Microsoft Active Directory.
 
 
-## Monitoring
-select Database Insights - Standard
+### Monitoring
+"Database Insights - Standard" was auto selected from the "Monitoring" section. and "Database Insights - Advanced" was
+disabled as default. 
+
+#### Additional monitoring settings > Enhanced Monitoring
+Uncheck "Enable Enhanced monitoring" for cost saving. If we checked it then will have "OS metrics granularity" for 
+time period like 1 second, 5 seconds, etc. and "Monitoring role for OS metrics" to select a role for monitoring options
+are 
+* default
+* rds-monitoring-role
+
+#### Log exports
+Uncheck all the log exports to CloudWatch Logs for cost saving. Options are for checking
+* Audit log
+* Error log
+* General log
+* iam-db-auth-error log
+* instance log
+* Slow query log
+
+#### IAM role
+The following service-linked role is used for publishing logs to CloudWatch Logs. Was auto filled with "RDS service-linked role".
+
+### Additional configuration
+* Initial database name > enter "TestDB" as initial database name.
+* DB cluster parameter group > keep default "default.aurora-mysql8.0".
+* DB parameter group > keep default "default:aurora-mysql-8-0".
+* Option group > was auto filled with and was disabled with value default "default:aurora-mysql-8-0".
+* Failover priority > we selected No preference as default. But there was option from "No preference" to "1" to "15" for
+  failover priority. The lower the number, the higher the priority for failover.
+
+#### Backup
+* Backup retention period > keep default 1 day, and values are from 1 to 35 days.
+* Keep checked "Copy tags to snapshots" to copy tags from the DB cluster to snapshots.
+* Keep checked "Enable encryption".
+  * There will be "AWS KMS key" options to select a KMS key for encryption.
+
+#### Backtrack
+* Keep unchecked "Enable backtrack" as default. If checked then will have "Backtrack window" options to select a time
+  period for backtracking the database. The default is 1 hour, and the maximum is 72 hours.
+
+#### Maintenance
+* Keep checked "Enable automatic minor version upgrade" to automatically upgrade the database engine to the latest
+  minor version. This option is suitable for most applications.
+* Keep default "No preference" for "Maintenance window" to let RDS choose a time period for maintenance. This option is
+  suitable for most applications.
+* Keep check "Enable deletion protection" to prevent accidental deletion of the database. This option is suitable for
+  production environments. If checked then will have "Deletion protection" options.
 
 
+Now it will show us monthly estimated cost and click on "Create database" button to create the Aurora RDS instance.  
 
+Now at RDS > Databases, we can see the newly created Aurora RDS instance. It will take some time to create the RDS
+instance. And there will be on write instance and one read instance.
+
+If we click on our database then at "Connectivity & security" tab, we can see two endpoints, one for the writer
+endpoint and one for the reader endpoint. 
+
+While selected our database, we can click on "Actions" button there will be more options like 
+* Add reader
+* Create cross-Region read replica
+* Add Auto Scaling Policy
+* Add AWS Region
+and many more options like "Take snapshot", "Migrate snapshot", "Delete" and "Modify".
+
+If we click on "Add Auto Scaling Policy" then it will take us to the "Add Auto Scaling Policy" page. From there we can
+scale our RDS based on the CPU utilization or connections number. We can set the minimum and maximum capacity
+for the RDS instance. And we can also set the scaling cooldown period. Also configure cluster capacity for the RDS
+instance with minimum and maximum capacity.
+
+Also we can add another region by clicking on "Add AWS Region" button. It will take us to the "Add AWS Region" page.
+But for that we need bigger RDS instance than free tier. 
+
+For deleting the RDS instance, first we need to delete read instances by clicking on "Actions" button and selecting "Delete". For write instance we need to remove deletion protection by clicking on "Modify" button and unchecking "Enable deletion protection". After that first delete the write instance and then db cluster by clicking on "Actions" button and selecting "Delete". In the delete confirmation dialog, check the "I acknowledge that I want to delete this DB instance" checkbox also uncheck "Create final snapshot" and click on "Delete" button. 
 
 # Resources
 * [AWS in ONE VIDEO 🔥 For Beginners 2025 [HINDI] | MPrashant](https://www.youtube.com/watch?v=N4sJj-SxX00)
